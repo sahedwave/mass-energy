@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Relativistic Universe </title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#03060e;
+  --s1:rgba(10,16,32,.92);
+  --s2:rgba(4,8,18,.88);
+  --line:rgba(100,140,255,.12);
+  --line2:rgba(100,140,255,.22);
+  --text:#ddeeff;
+  --dim:#5a78a8;
+  --c1:#38d9ff;
+  --c2:#ffd040;
+  --c3:#ff5a5a;
+  --c4:#3affa0;
+  --c5:#ff8c30;
+  --c6:#c060ff;
+  --c7:#ff4088;
+  --shadow:0 16px 60px rgba(0,0,0,.7);
+  --r:16px;
+  --mono:'Space Mono',monospace;
+  --sans:'Outfit',sans-serif;
+  --panel-w:218px;
+  --right-w:200px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:var(--sans)}
+body{background:var(--bg);color:var(--text);font-size:13px}
+
+canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;cursor:crosshair}
+
+/* ── GLASS BASE ── */
+.pane{
+  backdrop-filter:blur(22px) saturate(1.4);
+  -webkit-backdrop-filter:blur(22px) saturate(1.4);
+  background:linear-gradient(160deg,var(--s1),var(--s2));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.06);
+  border-radius:var(--r);
+}
+
+/* ── TOP BAR ── */
+#topbar{
+  position:fixed;top:10px;left:10px;right:10px;
+  display:flex;align-items:center;gap:8px;
+  z-index:30;pointer-events:none;height:50px;
+}
+#brand{
+  pointer-events:auto;
+  padding:8px 14px;height:50px;
+  display:flex;align-items:center;gap:10px;
+  white-space:nowrap;flex-shrink:0;
+}
+.brand-icon{width:28px;height:28px;position:relative;flex-shrink:0}
+.brand-icon svg{width:28px;height:28px}
+#brand-text{display:flex;flex-direction:column;gap:1px}
+#brand-text strong{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#c0d8ff;font-weight:700;font-family:var(--sans)}
+#brand-text span{font-size:10px;color:var(--dim);font-family:var(--mono)}
+
+/* mode strip */
+#modes{
+  pointer-events:auto;
+  display:flex;gap:4px;padding:6px;
+  overflow-x:auto;scrollbar-width:none;flex:1;height:76px;
+}
+#modes::-webkit-scrollbar{display:none}
+.mbtn{
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:5px 10px;border-radius:10px;height:60px;
+  border:1px solid transparent;
+  background:rgba(255,255,255,.04);
+  color:var(--text);cursor:pointer;
+  transition:all .2s;min-width:92px;
+  font-family:var(--sans);position:relative;overflow:hidden;
+}
+.mbtn::after{content:'';position:absolute;inset:0;opacity:0;background:linear-gradient(135deg,rgba(56,217,255,.08),transparent);transition:opacity .2s}
+.mbtn:hover::after{opacity:1}
+.mbtn:hover{border-color:rgba(255,255,255,.1)}
+.mbtn.active{
+  background:linear-gradient(160deg,rgba(56,217,255,.12),rgba(180,140,255,.08));
+  border-color:rgba(56,217,255,.3);
+}
+.mbtn.active::after{opacity:1}
+.mbtn .mid{font-size:9px;color:var(--dim);font-family:var(--mono);letter-spacing:.08em;line-height:1}
+.mbtn .mname{font-size:11px;font-weight:700;line-height:1.3;margin-top:1px;letter-spacing:.01em}
+.mbtn .mtag{font-size:9px;color:var(--c1);margin-top:1px;line-height:1}
+.mbtn.new-mode .mtag{color:var(--c6)}
+.mbtn.new-mode{border-color:rgba(192,96,255,.2)}
+
+/* ── LEFT PANEL ── */
+#lpanel{
+  position:fixed;left:10px;top:66px;bottom:10px;
+  width:var(--panel-w);z-index:25;
+  display:flex;flex-direction:column;gap:6px;
+  overflow-y:auto;scrollbar-width:none;padding-bottom:4px;
+}
+#lpanel::-webkit-scrollbar{display:none}
+.panel-block{padding:10px;border-radius:14px}
+
+.seclabel{
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:#6888b0;margin-bottom:6px;display:flex;align-items:center;gap:5px;
+}
+.seclabel::before{content:'';display:block;width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+
+.row2{display:flex;align-items:center;gap:6px;margin:3px 0}
+.row2 label{font-size:11px;color:var(--dim);flex:0 0 84px;line-height:1.3;font-family:var(--sans)}
+.row2 .val{font-size:10px;color:#a8c4e8;font-family:var(--mono);flex:0 0 54px;text-align:right}
+
+/* custom range */
+.row2 input[type=range]{
+  flex:1;height:3px;appearance:none;-webkit-appearance:none;
+  background:rgba(56,217,255,.18);
+  border-radius:99px;outline:none;cursor:pointer;
+}
+.row2 input[type=range]::-webkit-slider-thumb{
+  appearance:none;-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:linear-gradient(180deg,#e0f4ff,#6ecfff);
+  border:1.5px solid rgba(255,255,255,.5);cursor:pointer;
+  box-shadow:0 0 8px rgba(56,217,255,.4);
+  transition:transform .15s;
+}
+.row2 input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.row2 input[type=range]:disabled{opacity:.35;cursor:not-allowed}
+
+.row2 input[type=checkbox]{width:14px;height:14px;accent-color:var(--c1);cursor:pointer}
+select{
+  flex:1;background:rgba(255,255,255,.06);color:var(--text);
+  border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  padding:4px 6px;font-family:var(--sans);font-size:11px;outline:none;cursor:pointer;
+}
+select:focus{border-color:rgba(56,217,255,.3)}
+
+/* gamma display */
+#gammadisplay{
+  margin-top:6px;padding:8px;border-radius:10px;
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);
+  display:grid;grid-template-columns:1fr 1fr;gap:5px;
+}
+.gval{display:flex;flex-direction:column;gap:1px}
+.gval .gk{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-family:var(--mono)}
+.gval .gv{font-size:13px;font-weight:700;font-family:var(--mono);color:#c0d8ff}
+.gval .gv.hi{color:var(--c2)}
+.gval .gv.lo{color:var(--c1)}
+.gval .gv.pu{color:var(--c6)}
+
+/* buttons */
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.btn{
+  padding:7px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);color:var(--text);
+  cursor:pointer;font-size:11px;font-weight:600;font-family:var(--sans);
+  transition:all .18s;text-align:center;letter-spacing:.02em;
+  position:relative;overflow:hidden;
+}
+.btn::after{content:'';position:absolute;inset:0;opacity:0;background:rgba(255,255,255,.06);transition:opacity .15s}
+.btn:hover::after{opacity:1}
+.btn.pri{
+  background:linear-gradient(180deg,rgba(56,217,255,.18),rgba(143,140,255,.12));
+  border-color:rgba(56,217,255,.3);color:#c0f0ff;
+}
+.btn.danger{border-color:rgba(255,90,90,.2);color:#ff9090}
+.btn.warn{border-color:rgba(255,200,60,.2);color:#ffd080}
+
+/* mode-specific block */
+.mc-block{
+  border-radius:12px;padding:8px;margin-bottom:0;
+  background:rgba(255,180,60,.04);
+  border:1px solid rgba(255,180,60,.12);
+}
+.mc-block .seclabel{color:#c8902a}
+
+/* mass explorer block */
+.me-block{
+  border-radius:12px;padding:8px;
+  background:rgba(56,217,255,.04);
+  border:1px solid rgba(56,217,255,.14);
+}
+.me-block .seclabel{color:var(--c1)}
+
+/* ── RIGHT SIDE ── */
+#rightcol{
+  position:fixed;right:10px;top:86px;bottom:10px;
+  width:var(--right-w);z-index:24;
+  display:flex;flex-direction:column;gap:6px;
+}
+
+/* legend */
+#legend{padding:10px}
+.li{display:flex;align-items:center;gap:7px;margin:4px 0;font-size:10px;color:#8aaccf;font-family:var(--sans)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* HUD */
+#hud{padding:10px;flex:0 0 auto}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.metric{
+  padding:7px 8px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  transition:border-color .3s;
+}
+.metric:hover{border-color:rgba(56,217,255,.2)}
+.metric .mk{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:2px;font-family:var(--mono)}
+.metric .mv{font-size:13px;font-weight:700;font-family:var(--mono)}
+
+/* Doppler key */
+#dopplerkey{padding:8px;display:none}
+.dkey-bar{height:12px;border-radius:6px;margin:4px 0;
+  background:linear-gradient(90deg,#ff2020,#ff6020,#ffff20,#20ff60,#2060ff,#8020ff);
+  border:1px solid rgba(255,255,255,.1)}
+.dkey-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);font-family:var(--mono)}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;left:50%;top:68px;
+  transform:translateX(-50%) translateY(-10px);
+  z-index:50;padding:8px 18px;border-radius:99px;
+  background:rgba(6,10,22,.95);border:1px solid rgba(56,217,255,.22);
+  color:#d8f0ff;font-size:11px;opacity:0;font-family:var(--mono);
+  transition:opacity .3s,transform .3s;pointer-events:none;
+  backdrop-filter:blur(14px);letter-spacing:.04em;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── MODE SELECTION MODAL ── */
+#modeModal{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(2,5,14,.88);
+  backdrop-filter:blur(18px);
+  opacity:0;pointer-events:none;
+  transition:opacity .35s;
+}
+#modeModal.open{opacity:1;pointer-events:auto}
+.modal-box{
+  width:min(700px,94vw);
+  background:linear-gradient(160deg,rgba(10,18,38,.98),rgba(4,8,20,.98));
+  border:1px solid rgba(56,217,255,.18);
+  border-radius:22px;
+  box-shadow:0 30px 100px rgba(0,0,0,.8),0 0 0 1px rgba(56,217,255,.06);
+  overflow:hidden;
+  transform:translateY(20px) scale(.97);
+  transition:transform .4s cubic-bezier(.18,.95,.22,1);
+}
+#modeModal.open .modal-box{transform:none}
+.modal-head{
+  padding:22px 26px 16px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:flex-start;justify-content:space-between;
+}
+.modal-head h2{font-size:20px;font-weight:900;letter-spacing:-.01em;color:#ddeeff;font-family:var(--sans)}
+.modal-head p{font-size:11px;color:var(--dim);margin-top:3px;font-family:var(--mono)}
+.modal-close{
+  width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);color:#90b0d8;cursor:pointer;
+  display:grid;place-items:center;font-size:16px;font-family:var(--sans);
+  transition:all .2s;flex-shrink:0;margin-top:2px;
+}
+.modal-close:hover{background:rgba(255,90,90,.1);border-color:rgba(255,90,90,.2);color:#ff9090}
+
+.modal-options{
+  padding:16px 22px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.mopt{
+  padding:14px 16px;border-radius:14px;cursor:pointer;
+  border:1.5px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);
+  transition:all .22s;position:relative;overflow:hidden;
+}
+.mopt::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,rgba(56,217,255,.08),transparent 60%);
+  transition:opacity .2s;
+}
+.mopt:hover{border-color:rgba(56,217,255,.25);transform:translateY(-1px)}
+.mopt:hover::before{opacity:1}
+.mopt.selected{
+  border-color:rgba(56,217,255,.4);
+  background:rgba(56,217,255,.07);
+  box-shadow:0 0 0 1px rgba(56,217,255,.15),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.mopt.selected::before{opacity:1}
+.mopt.new-opt{border-color:rgba(192,96,255,.15)}
+.mopt.new-opt:hover{border-color:rgba(192,96,255,.4)}
+.mopt.new-opt.selected{border-color:rgba(192,96,255,.5);background:rgba(192,96,255,.08);box-shadow:0 0 0 1px rgba(192,96,255,.18)}
+.mopt.new-opt::before{background:linear-gradient(135deg,rgba(192,96,255,.08),transparent 60%)}
+.mopt-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:8px;letter-spacing:.1em;text-transform:uppercase;
+  font-family:var(--mono);padding:2px 6px;border-radius:99px;
+  margin-bottom:7px;
+}
+.mopt-badge.std{background:rgba(56,217,255,.12);color:var(--c1)}
+.mopt-badge.new{background:rgba(192,96,255,.15);color:var(--c6)}
+.mopt-badge.new::before{content:'★ ';font-size:7px}
+.mopt h3{font-size:14px;font-weight:700;color:#ddeeff;margin-bottom:4px;letter-spacing:-.01em;font-family:var(--sans)}
+.mopt p{font-size:10px;color:#7090b8;line-height:1.5;font-family:var(--sans)}
+.mopt-check{
+  position:absolute;top:10px;right:10px;width:18px;height:18px;
+  border-radius:5px;border:1.5px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.04);display:grid;place-items:center;
+  font-size:11px;transition:all .2s;
+}
+.mopt.selected .mopt-check{
+  background:var(--c1);border-color:var(--c1);color:#001824;
+}
+.mopt.new-opt.selected .mopt-check{background:var(--c6);border-color:var(--c6)}
+
+/* NEW MODE CONFIG PANELS */
+.mopt-config{
+  display:none;padding:10px;border-radius:10px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);
+  margin-top:8px;
+}
+.mopt.selected .mopt-config{display:block}
+.mopt-config .row2 label{flex:0 0 110px;font-size:10px}
+.mopt-config .val{font-size:10px}
+
+.modal-foot{
+  padding:14px 22px;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.modal-foot p{font-size:10px;color:var(--dim);font-family:var(--mono)}
+.modal-apply{
+  padding:10px 28px;border-radius:10px;
+  background:linear-gradient(180deg,rgba(56,217,255,.22),rgba(56,217,255,.12));
+  border:1px solid rgba(56,217,255,.4);
+  color:#c0f0ff;font-size:12px;font-weight:700;font-family:var(--sans);
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+  transition:all .2s;
+  box-shadow:0 0 20px rgba(56,217,255,.15);
+}
+.modal-apply:hover{
+  background:linear-gradient(180deg,rgba(56,217,255,.32),rgba(56,217,255,.18));
+  box-shadow:0 0 30px rgba(56,217,255,.3);transform:translateY(-1px);
+}
+.modal-apply:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── CARD STACK ── */
+#cards{
+  position:fixed;left:234px;bottom:10px;
+  width:290px;z-index:26;pointer-events:none;
+  display:flex;flex-direction:column;gap:6px;
+}
+.card{
+  pointer-events:auto;border-radius:var(--r);overflow:hidden;
+  opacity:0;transform:translateX(-24px) scale(.97);
+  transition:opacity .4s,transform .5s cubic-bezier(.18,.95,.22,1),max-height .4s;
+  max-height:72px;
+}
+.card.show{opacity:1;transform:none}
+.card.exp{max-height:420px}
+.ctop{
+  padding:10px 12px;
+  background:linear-gradient(180deg,rgba(14,24,48,.95),rgba(6,10,22,.95));
+  border-bottom:1px solid rgba(255,255,255,.06);position:relative;
+}
+.ckick{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#6888b0;margin-bottom:3px;font-family:var(--mono)}
+.ctitle{font-size:14px;font-weight:800;line-height:1.2;letter-spacing:-.01em}
+.csub{margin-top:3px;font-size:10px;color:#7a98c0;line-height:1.4;padding-right:32px}
+.xbtn{
+  position:absolute;right:10px;top:10px;
+  width:26px;height:26px;border-radius:7px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  color:#d0e8ff;cursor:pointer;display:grid;place-items:center;font-size:12px;
+  transition:transform .25s;font-family:var(--sans);
+}
+.card.exp .xbtn{transform:rotate(180deg)}
+.cbody{padding:10px 12px;background:rgba(3,6,14,.95);display:grid;gap:6px;overflow-y:auto;max-height:340px;}
+.csec{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+.csec h4{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7090c0;margin-bottom:4px;font-family:var(--mono)}
+.csec p{font-size:10px;line-height:1.55;color:#7898b8;font-family:var(--sans)}
+
+/* ── TRANSITION ── */
+#tovl{position:fixed;inset:0;z-index:18;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 40%,rgba(56,217,255,.07),transparent 22%);
+  transition:opacity .45s;mix-blend-mode:screen}
+#tovl.on{opacity:1}
+
+/* fps */
+#fpslabel{font-size:9px;font-family:var(--mono);color:var(--c1)}
+
+/* help bar */
+#helpbar{
+  position:fixed;left:234px;right:206px;bottom:20px;
+  z-index:20;padding:7px 14px;text-align:center;
+  font-size:9px;color:rgba(80,110,160,.7);font-family:var(--mono);letter-spacing:.04em;
+  pointer-events:none;
+}
+#helpbar0{
+  position:fixed;left:234px;right:206px;bottom:7px;
+  z-index:20;padding:7px 14px;text-align:center;
+  font-size:9px;color:rgba(80,110,160,.7);font-family:var(--mono);letter-spacing:.04em;
+  pointer-events:none;
+}
+
+/* new mode indicator badge on top bar */
+.new-badge{
+  display:inline-block;font-size:8px;letter-spacing:.08em;
+  background:rgba(192,96,255,.15);color:var(--c6);
+  border:1px solid rgba(192,96,255,.25);border-radius:99px;
+  padding:1px 5px;font-family:var(--mono);vertical-align:middle;margin-left:3px;
+}
+
+@media(max-width:860px){#legend{display:none}#dopplerkey{display:none!important}}
+@media(max-width:640px){
+  #lpanel{width:180px}
+  #cards{left:10px;right:10px;width:auto;bottom:80px}
+  #helpbar{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="tovl"></div>
+<div id="toast"></div>
+
+<!-- ── TOP BAR ── -->
+<div id="topbar">
+  <div class="pane" id="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="9" stroke="#38d9ff" stroke-width="1.2" stroke-dasharray="2 3"/>
+        <circle cx="14" cy="14" r="5" stroke="#38d9ff" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="2.5" fill="#38d9ff"/>
+        <line x1="14" y1="4" x2="14" y2="8" stroke="#38d9ff" stroke-width="1" opacity=".4"/>
+        <line x1="14" y1="20" x2="14" y2="24" stroke="#38d9ff" stroke-width="1" opacity=".4"/>
+        <line x1="4" y1="14" x2="8" y2="14" stroke="#38d9ff" stroke-width="1" opacity=".4"/>
+        <line x1="20" y1="14" x2="24" y2="14" stroke="#38d9ff" stroke-width="1" opacity=".4"/>
+      </svg>
+    </div>
+    <div id="brand-text">
+      <strong><h6>.ALLIED.</h6></strong>
+      <strong>Relativistic Universe</strong>
+      <span id="statuslabel">v2 · LIVE</span>
+    </div>
+  </div>
+  <div class="pane" id="modes"></div>
+  <div class="pane" style="padding:6px 12px;height:50px;display:flex;flex-direction:column;justify-content:center;flex-shrink:0;gap:2px">
+    <div id="fpslabel">60 FPS</div>
+    <button onclick="openModal()" style="background:linear-gradient(135deg,rgba(192,96,255,.18),rgba(56,217,255,.1));border:1px solid rgba(192,96,255,.3);border-radius:7px;color:#d0a0ff;font-size:9px;font-family:var(--mono);letter-spacing:.06em;padding:3px 8px;cursor:pointer;white-space:nowrap">⊕ ADD MODE</button>
+  </div>
+</div>
+
+<!-- ── LEFT PANEL ── -->
+<aside id="lpanel">
+
+  <!-- Mass Explorer -->
+  <div class="panel-block pane me-block">
+    <span class="seclabel">⚛ Mass ↔ Speed Explorer</span>
+    <div class="row2">
+      <label>Particle mass</label>
+      <input type="range" id="slMass" min="0" max="1" value="0" step="0.01">
+      <div class="val" id="vMass">0 (γ)</div>
+    </div>
+    <div class="row2">
+      <label>Init speed (β)</label>
+      <input type="range" id="slBeta" min="0.01" max="0.9999" value="0.5" step="0.0001">
+      <div class="val" id="vBeta">0.50 c</div>
+    </div>
+    <div id="gammadisplay">
+      <div class="gval"><div class="gk">γ Lorentz</div><div class="gv hi" id="gGamma">1.00</div></div>
+      <div class="gval"><div class="gk">Speed</div><div class="gv lo" id="gSpeed">0.50 c</div></div>
+      <div class="gval"><div class="gk">E / mc²</div><div class="gv" id="gEnergy">—</div></div>
+      <div class="gval"><div class="gk">Time dilation</div><div class="gv pu" id="gTau">—</div></div>
+    </div>
+  </div>
+
+  <!-- Mode controls -->
+  <div class="panel-block pane mc-block" id="modecontrols" style="display:none">
+    <span class="seclabel" id="mclabel">Mode Controls</span>
+    <div id="mcinner"></div>
+  </div>
+
+  <!-- Simulation -->
+  <div class="panel-block pane">
+    <span class="seclabel">Simulation</span>
+    <div class="row2"><label>Spawn rate</label><input type="range" id="slSpawn" min="2" max="40" value="14" step="1"><div class="val" id="vSpawn">14/s</div></div>
+    <div class="row2"><label>Trail length</label><input type="range" id="slTrail" min="4" max="36" value="14" step="1"><div class="val" id="vTrail">14 pts</div></div>
+    <div class="row2"><label>Time scale</label><input type="range" id="slTime" min="0.25" max="2.4" value="1" step="0.05"><div class="val" id="vTime">1.00×</div></div>
+    <div class="row2"><label>c (light speed)</label><input type="range" id="slC" min="80" max="520" value="220" step="5"><div class="val" id="vC">220</div></div>
+    <div class="row2"><label>Light cone</label><input type="checkbox" id="cbCone" checked><div class="val" id="vCone">ON</div></div>
+    <div class="row2"><label>Auto cards</label><input type="checkbox" id="cbCards" checked><div class="val" id="vCards">ON</div></div>
+  </div>
+
+  <!-- Emitter -->
+  <div class="panel-block pane">
+    <span class="seclabel">Emitter</span>
+    <div class="row2"><label>Pattern</label><select id="selEmit"><option value="radial">Radial burst</option><option value="beam">Directed beam</option><option value="spray">Wide spray</option></select></div>
+    <div class="row2"><label>Beam angle</label><input type="range" id="slAngle" min="0" max="360" value="0" step="1"><div class="val" id="vAngle">0°</div></div>
+    <div class="row2"><label>Spread</label><input type="range" id="slSpread" min="0" max="180" value="28" step="1"><div class="val" id="vSpread">28°</div></div>
+    <div class="brow">
+      <button class="btn pri" id="btnPulse">⚡ Pulse</button>
+      <button class="btn danger" id="btnClear">✕ Clear</button>
+      <button class="btn warn" id="btnPause">⏸ Pause</button>
+      <button class="btn" id="btnCenter">⊕ Recenter</button>
+    </div>
+  </div>
+
+  <div style="padding:6px 8px;font-size:9px;color:#3a5070;line-height:1.6;font-family:var(--mono)">
+    click=emitter · drag=steer · dbl=wave<br>0-7=modes · V=vectors · M=modal
+  </div>
+</aside>
+
+<!-- ── RIGHT COLUMN ── -->
+<aside id="rightcol">
+  <div class="pane panel-block" id="legend">
+    <div class="seclabel">Legend</div>
+    <div class="li"><div class="dot" style="background:#38d9ff;box-shadow:0 0 6px #38d9ff"></div>Massless — β = 1 always</div>
+    <div class="li"><div class="dot" style="background:#ffd040;box-shadow:0 0 6px #ffd040"></div>Massive — β &lt; c, γ dynamics</div>
+    <div class="li"><div class="dot" style="background:#3affa0"></div>Shockwave / disturbance</div>
+    <div class="li"><div class="dot" style="background:#ff8c30"></div>Refractive boundary</div>
+    <div class="li"><div class="dot" style="background:#ff5a5a"></div>Gravity / lensing field</div>
+    <div class="li" id="doppler-legend" style="display:none"><div class="dot" style="background:linear-gradient(90deg,#ff2020,#2060ff)"></div>Doppler — blue/redshift</div>
+    <div class="li" id="twin-legend" style="display:none"><div class="dot" style="background:#c060ff;box-shadow:0 0 6px #c060ff"></div>Twin paradox clock</div>
+  </div>
+
+  <!-- Doppler key -->
+  <div class="pane panel-block" id="dopplerkey">
+    <div class="seclabel">Doppler Spectrum</div>
+    <div class="dkey-bar"></div>
+    <div class="dkey-labels"><span>redshift (away)</span><span>blueshift (toward)</span></div>
+    <div style="font-size:9px;color:var(--dim);margin-top:5px;font-family:var(--mono)" id="dopplerInfo">β=0.00 · factor=1.00</div>
+  </div>
+
+  <div class="pane panel-block" id="hud">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="seclabel" style="margin:0">Metrics</div>
+    </div>
+    <div class="hgrid">
+      <div class="metric"><div class="mk">Mode</div><div class="mv" id="mMode" style="color:var(--c1)">V1</div></div>
+      <div class="metric"><div class="mk">Particles</div><div class="mv" id="mPart">0</div></div>
+      <div class="metric"><div class="mk">Massless</div><div class="mv" id="mLight" style="color:var(--c1)">0</div></div>
+      <div class="metric"><div class="mk">Massive</div><div class="mv" id="mHeavy" style="color:var(--c2)">0</div></div>
+      <div class="metric"><div class="mk">c px/s</div><div class="mv" id="mC">220</div></div>
+      <div class="metric"><div class="mk">State</div><div class="mv" id="mState" style="color:var(--c4)">RUN</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── CARDS ── -->
+<div id="cards"></div>
+
+<!-- ── HELP BAR ── -->
+<div id="helpbar">KEYS: 0–7 = modes · SPACE = pause · C = clear · P = pulse · V = vectors · M = mode picker</div>
+
+<div id="helpbar0">I'm S Rahman. It's a fun project. If u like it or wanna add any u can go and check it in my github[@sahedwave].</div>
+
+<!-- ── MODE SELECTION MODAL ── -->
+<div id="modeModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2>Choose Physics Mode</h2>
+        <p>Select a mode to explore · New modes include configurable parameters</p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-options" id="modalOptions"></div>
+    <div class="modal-foot">
+      <p id="modalSelLabel">No mode selected</p>
+      <button class="modal-apply" id="modalApplyBtn" disabled onclick="applyModalMode()">Apply Mode →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const TAU=Math.PI*2,EPS=1e-9,MAX_P=2400,MAX_TR=40,SAFE_B2=0.9999992;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const eoc=t=>1-(1-t)**3;
+const rand=(a=0,b=1)=>a+Math.random()*(b-a);
+const toRad=d=>d*Math.PI/180;
+const safeL=(x,y)=>{const l=Math.hypot(x,y);return l<EPS?EPS:l};
+const gB2=b2=>1/Math.sqrt(1-clamp(b2,0,SAFE_B2));
+const GMAX=gB2(SAFE_B2);
+const gP2=(p2,m,c)=>{const mc=Math.max(m*c,EPS);return Math.sqrt(1+Math.max(0,p2)/(mc*mc))};
+
+// ── Modes definition ──────────────────────────────────────────────────────
+const MODES=[
+{id:'v0',name:'No Speed Limit',short:'Newtonian baseline',tag:'classical',isNew:false,
+ what:'In classical physics there is no universal speed limit. Particles move exactly as fast as their initial conditions set them, and forces accelerate them without bound. Watch speedometers: particles can exceed any value.',
+ why:'This baseline shows what the universe would look like WITHOUT relativity — feel the contrast when you switch to v1.',
+ learn:'Without a speed limit, motion is unbounded. Relativity imposes c as an unbreakable ceiling.',
+ settings:{showCone:false,medium:false,gravity:false,massEmergence:false,referenceMode:true,coneFocus:false,doppler:false,twinParadox:false}},
+
+{id:'v1',name:'Speed Limit: c',short:'Massless locked to c',tag:'special relativity',isNew:false,
+ what:'Every massless particle is ALWAYS at exactly c. Forces can rotate direction but CANNOT change speed. The β label on each particle never leaves 1.00.',
+ why:'Einstein showed light speed is invariant in all reference frames — the foundation of special relativity.',
+ learn:'c is not a wall — it is the only speed massless things can travel. They cannot slow or accelerate.',
+ settings:{showCone:true,medium:false,gravity:false,massEmergence:false,referenceMode:false,coneFocus:false,doppler:false,twinParadox:false}},
+
+{id:'v2',name:'Refractive Medium',short:'Apparent slowing in matter',tag:'optics',isNew:false,
+ what:'Inside the orange zone, effective propagation speed drops to c/n. Adjust n to watch paths bend at the boundary — that bending IS Snell\'s law. Outside the medium, speed snaps back to c.',
+ why:'Glass slows light to ~2×10⁸ m/s (n≈1.5). This is why lenses focus and prisms split colours.',
+ learn:'Light never actually slows in vacuum. Inside matter, the effective group velocity changes.',
+ settings:{showCone:true,medium:true,gravity:false,massEmergence:false,referenceMode:false,coneFocus:false,doppler:false,twinParadox:false}},
+
+{id:'v3',name:'Gravitational Lensing',short:'Curved paths near mass',tag:'general relativity',isNew:false,
+ what:'The red gravity well bends all trajectories — massless and massive alike. Increase strength to see tighter bending. At extreme gravity paths can loop, visualising black hole lensing.',
+ why:'Einstein predicted — and Eddington confirmed in 1919 — that gravity bends light. It\'s spacetime curvature.',
+ learn:'Even massless things follow curved paths in gravity. Curvature of spacetime governs all trajectories.',
+ settings:{showCone:true,medium:false,gravity:true,massEmergence:false,referenceMode:false,coneFocus:false,doppler:false,twinParadox:false}},
+
+{id:'v4',name:'Light-Cone Spacetime',short:'Causal structure',tag:'causality',isNew:false,
+ what:'The cone from the emitter divides spacetime: INSIDE = timelike (massive particles), SURFACE = lightlike (massless). Nothing exits the cone. Annotations show which particles sit where.',
+ why:'The light cone defines causality: events inside can be caused by the origin; outside cannot.',
+ learn:'The cone boundary is absolute. Massive particles stay inside. Massless sit exactly on the surface.',
+ settings:{showCone:true,medium:false,gravity:false,massEmergence:false,referenceMode:false,coneFocus:true,doppler:false,twinParadox:false}},
+
+{id:'v5',name:'Two-Class Universe',short:'Massive vs massless',tag:'particle physics',isNew:false,
+ what:'BLUE particles (m=0) always travel at c. YELLOW particles (m>0) travel BELOW c. The γ readout shows how close to c each massive particle is.',
+ why:'The universe contains two fundamentally different classes. Mass determines which class.',
+ learn:'Adding ANY mass forces a particle below c. γ grows without bound as v→c but can never reach it.',
+ settings:{showCone:true,medium:false,gravity:false,massEmergence:true,referenceMode:false,coneFocus:false,doppler:false,twinParadox:false}},
+
+{id:'v6',name:'Doppler Shift',short:'Relativistic colour change',tag:'wave physics',isNew:true,
+ what:'Each particle is coloured by its relativistic Doppler factor relative to your cursor position. Moving toward you = BLUESHIFT (higher frequency). Moving away = REDSHIFT (lower frequency). The full relativistic formula accounts for time dilation.',
+ why:'The Doppler effect explains why ambulance sirens change pitch, why the universe is expanding (galactic redshift), and is used to measure star velocities.',
+ learn:'Relativistic Doppler: f_obs = f_src √((1+β)/(1−β)) for approach, √((1−β)/(1+β)) for recession. Purely kinematic — no gravity needed.',
+ settings:{showCone:false,medium:false,gravity:false,massEmergence:false,referenceMode:false,coneFocus:false,doppler:true,twinParadox:false},
+ configDefaults:{dopplerObsX:0.5,dopplerObsY:0.5}},
+
+{id:'v7',name:'Twin Paradox',short:'Proper time divergence',tag:'time dilation',isNew:true,
+ what:'Two particles launch together. The PURPLE twin accelerates away and returns — its onboard clock (proper time) runs slower due to time dilation. The CYAN twin stays in the lab frame. Watch the clock gap grow on return. The accelerating twin is genuinely younger.',
+ why:'The twin paradox is the most famous consequence of special relativity — real effects measured in particle accelerators and GPS satellites.',
+ learn:'The asymmetry is real and measurable. The travelling twin breaks symmetry by accelerating. Proper time τ = ∫dt/γ, always less than coordinate time for any moving object.',
+ settings:{showCone:true,medium:false,gravity:false,massEmergence:false,referenceMode:false,coneFocus:false,doppler:false,twinParadox:true},
+ configDefaults:{twinSpeed:0.8,twinTripDur:3.0}},
+];
+
+// ── Modal state ─────────────────────────────────────────────────────────
+let modalSelectedId=null;
+const modalConfig={
+  dopplerObsX:0.5,dopplerObsY:0.5,
+  twinSpeed:0.8,twinTripDur:3.0,
+  refractN:1.45,gravStr:24000,
+};
+
+function buildModalOptions(){
+  const container=document.getElementById('modalOptions');
+  container.innerHTML='';
+  for(const m of MODES){
+    const div=document.createElement('div');
+    div.className='mopt'+(m.isNew?' new-opt':'');
+    div.dataset.id=m.id;
+    div.innerHTML=`
+      <div class="mopt-badge ${m.isNew?'new':'std'}">${m.isNew?'New · '+m.tag:m.tag}</div>
+      <div class="mopt-check">✓</div>
+      <h3>${m.id.toUpperCase()} · ${m.name}</h3>
+      <p>${m.short}</p>
+      ${m.id==='v6'?`
+      <div class="mopt-config">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:6px;font-family:var(--mono)">Configure Doppler observer</div>
+        <div class="row2"><label>Observer X (%)</label>
+          <input type="range" min="0.05" max="0.95" step="0.01" value="${modalConfig.dopplerObsX}" id="mc_dopplerX">
+          <div class="val" id="mc_dopplerXv">${Math.round(modalConfig.dopplerObsX*100)}%</div></div>
+        <div class="row2"><label>Observer Y (%)</label>
+          <input type="range" min="0.05" max="0.95" step="0.01" value="${modalConfig.dopplerObsY}" id="mc_dopplerY">
+          <div class="val" id="mc_dopplerYv">${Math.round(modalConfig.dopplerObsY*100)}%</div></div>
+      </div>`:''}
+      ${m.id==='v7'?`
+      <div class="mopt-config">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:6px;font-family:var(--mono)">Configure twin journey</div>
+        <div class="row2"><label>Twin speed (β)</label>
+          <input type="range" min="0.1" max="0.995" step="0.005" value="${modalConfig.twinSpeed}" id="mc_twinSpd">
+          <div class="val" id="mc_twinSpdv">${modalConfig.twinSpeed.toFixed(2)}c</div></div>
+        <div class="row2"><label>Trip duration (s)</label>
+          <input type="range" min="1" max="8" step="0.5" value="${modalConfig.twinTripDur}" id="mc_twinDur">
+          <div class="val" id="mc_twinDurv">${modalConfig.twinTripDur.toFixed(1)}s</div></div>
+        <div style="font-size:9px;color:var(--c6);margin-top:5px;font-family:var(--mono)" id="mc_twinPreview">
+          γ=${gB2(modalConfig.twinSpeed**2).toFixed(3)} · age diff≈${((modalConfig.twinTripDur*2)*(1-1/gB2(modalConfig.twinSpeed**2))).toFixed(2)}s
+        </div>
+      </div>`:''}
+    `;
+    div.addEventListener('click',(e)=>{
+      if(e.target.closest('input'))return;
+      document.querySelectorAll('.mopt').forEach(o=>o.classList.remove('selected'));
+      div.classList.add('selected');
+      modalSelectedId=m.id;
+      document.getElementById('modalSelLabel').textContent=`Selected: ${m.id.toUpperCase()} · ${m.name}`;
+      document.getElementById('modalApplyBtn').disabled=false;
+    });
+    container.appendChild(div);
+  }
+  // wire config inputs after build
+  setTimeout(()=>{
+    const wireRange=(id,key,fmt,prevFn)=>{
+      const el=document.getElementById(id);if(!el)return;
+      el.addEventListener('input',function(){
+        modalConfig[key]=+this.value;
+        const vEl=document.getElementById(id+'v');if(vEl)vEl.textContent=fmt(+this.value);
+        if(prevFn)prevFn();
+      });
+    };
+    wireRange('mc_dopplerX','dopplerObsX',v=>Math.round(v*100)+'%');
+    wireRange('mc_dopplerY','dopplerObsY',v=>Math.round(v*100)+'%');
+    wireRange('mc_twinSpd','twinSpeed',v=>v.toFixed(2)+'c',()=>{
+      const b=modalConfig.twinSpeed,g=gB2(b*b),d=modalConfig.twinTripDur;
+      const el=document.getElementById('mc_twinPreview');
+      if(el)el.textContent=`γ=${g.toFixed(3)} · age diff≈${(d*2*(1-1/g)).toFixed(2)}s`;
+    });
+    wireRange('mc_twinDur','twinTripDur',v=>v.toFixed(1)+'s',()=>{
+      const b=modalConfig.twinSpeed,g=gB2(b*b),d=modalConfig.twinTripDur;
+      const el=document.getElementById('mc_twinPreview');
+      if(el)el.textContent=`γ=${g.toFixed(3)} · age diff≈${(d*2*(1-1/g)).toFixed(2)}s`;
+    });
+  },50);
+}
+
+function openModal(){
+  buildModalOptions();
+  modalSelectedId=null;
+  document.getElementById('modalSelLabel').textContent='No mode selected';
+  document.getElementById('modalApplyBtn').disabled=true;
+  document.getElementById('modeModal').classList.add('open');
+}
+function closeModal(){document.getElementById('modeModal').classList.remove('open');}
+function applyModalMode(){
+  if(!modalSelectedId)return;
+  const m=MODES.find(x=>x.id===modalSelectedId);
+  if(!m)return;
+  // apply config into engine
+  if(m.id==='v6'){engine.S.dopplerObsX=modalConfig.dopplerObsX;engine.S.dopplerObsY=modalConfig.dopplerObsY;}
+  if(m.id==='v7'){engine.S.twinSpeed=modalConfig.twinSpeed;engine.S.twinTripDur=modalConfig.twinTripDur;}
+  closeModal();
+  setActiveMode(m.id);
+  engine.setMode(m);
+}
+window.addEventListener('keydown',e=>{if(e.key==='m'||e.key==='M')openModal();});
+document.getElementById('modeModal').addEventListener('click',e=>{if(e.target===document.getElementById('modeModal'))closeModal();});
+
+// ── Shockwave ──────────────────────────────────────────────────────────
+class Shockwave{
+  constructor(x,y,rgb,maxR,dur=0.8){this.x=x;this.y=y;this.rgb=rgb;this.maxR=maxR;this.dur=dur;this.t=0;this.alive=true}
+  upd(dt){this.t+=dt;if(this.t>=this.dur)this.alive=false}
+  draw(ctx){
+    const p=clamp(this.t/this.dur,0,1),r=eoc(p)*this.maxR,a=(1-p)*0.7;
+    ctx.save();ctx.beginPath();ctx.arc(this.x,this.y,r,0,TAU);
+    ctx.strokeStyle=`rgba(${this.rgb},${a})`;ctx.lineWidth=lerp(5,1,p);
+    ctx.shadowBlur=20;ctx.shadowColor=`rgba(${this.rgb},.9)`;ctx.stroke();ctx.restore();
+  }
+}
+class Disturbance{
+  constructor(x,y,str=1200,dur=2.5){this.x=x;this.y=y;this.str=str;this.dur=dur;this.t=0;this.alive=true}
+  upd(dt){this.t+=dt;if(this.t>=this.dur)this.alive=false}
+}
+
+// ── Particle ──────────────────────────────────────────────────────────
+class P{
+  constructor(){
+    this.px=this.py=this.vx=this.vy=this.ax=this.ay=this.fx=this.fy=0;
+    this.mpx=this.mpy=0;
+    this.life=this.maxLife=this.properTime=0;
+    this.gamma=1;this.invG=1;this.beta2=0;this.speed=0;this.relE=0;
+    this.r=2;this.mass=0;this.massless=true;this.alive=false;
+    this.vGlow=1;this.vEnergy=1;this.vComp=1;
+    this.dirx=1;this.diry=0;
+    this.dopplerFactor=1;
+    this.isTwin=false;this.twinIdx=0;
+    this.tx=new Float32Array(MAX_TR);this.ty=new Float32Array(MAX_TR);
+    this.tc=0;this.th=0;this.tAcc=0;
+  }
+  resetTrail(){this.tc=0;this.th=0;this.tAcc=0}
+  pushTrail(lim){
+    this.tx[this.th]=this.px;this.ty[this.th]=this.py;
+    this.th=(this.th+1)%MAX_TR;if(this.tc<lim)this.tc++;
+  }
+}
+
+// ── Twin Paradox state ────────────────────────────────────────────────
+const twinState={
+  labTime:0,travelTime:0,
+  phase:'out',// out | return | done
+  labClock:0,travelClock:0,
+  lapTime:0,tripDur:3,speed:0.8,
+  announced:false,
+};
+
+// ── Engine ────────────────────────────────────────────────────────────
+class Engine{
+  constructor(){
+    this.W=innerWidth;this.H=innerHeight;
+    this.ex=this.W*.5;this.ey=this.H*.5;
+    this.ps=[];this.apc=0;
+    this.sws=[];this.dists=[];
+    this.paused=false;this.frame=0;this.rt=0;
+    this.fps=60;this._fpsT=0;this._fpsN=0;
+    this.spawnAcc=0;
+    this.mode=MODES[1];this.transT=0;this.transing=false;
+    this.mlc=0;this.mvc=0;
+    this.mouseX=this.W*.5;this.mouseY=this.H*.5;
+
+    this.S={
+      spawnRate:14,trailLen:14,timeScale:1,c:220,
+      showCone:true,autoCards:true,
+      emitMode:'radial',beamAngle:0,beamSpread:28,
+      explorerMass:0,explorerBeta:0.5,
+      refractN:1.45,gravStr:24000,
+      dopplerObsX:0.5,dopplerObsY:0.5,
+      twinSpeed:0.8,twinTripDur:3.0,
+    };
+
+    this.medZ={x:this.W*.5,y:this.H*.52,r:Math.min(this.W,this.H)*.18};
+    this.gravW={x:this.W*.58,y:this.H*.48,r:Math.min(this.W,this.H)*.08};
+
+    for(let i=0;i<MAX_P;i++)this.ps.push(new P());
+  }
+
+  resize(w,h){
+    this.W=w;this.H=h;
+    this.medZ.x=w*.5;this.medZ.y=h*.52;this.medZ.r=Math.min(w,h)*.18;
+    this.gravW.x=w*.58;this.gravW.y=h*.48;this.gravW.r=Math.min(w,h)*.08;
+    if(this.ex>w||this.ey>h){this.ex=w*.5;this.ey=h*.5}
+  }
+
+  setMode(m){
+    this.mode=m;
+    this.S.showCone=!!m.settings.showCone;
+    document.getElementById('cbCone').checked=this.S.showCone;
+    document.getElementById('vCone').textContent=this.S.showCone?'ON':'OFF';
+    this._transBegin();
+    if(this.S.autoCards)CardMgr.show(m);
+    this._shockwave(this.ex,this.ey,'56,217,255',260);
+    this._toast(`${m.id.toUpperCase()} · ${m.name}`);
+    updateModeControls(m);
+    this._syncHud();
+    // Doppler UI
+    const dk=document.getElementById('dopplerkey');
+    const dl=document.getElementById('doppler-legend');
+    dk.style.display=m.settings.doppler?'block':'none';
+    dl.style.display=m.settings.doppler?'flex':'none';
+    document.getElementById('twin-legend').style.display=m.settings.twinParadox?'flex':'none';
+    // reset twin state
+    if(m.settings.twinParadox){
+      twinState.labClock=0;twinState.travelClock=0;
+      twinState.phase='out';twinState.lapTime=0;
+      twinState.tripDur=this.S.twinTripDur;
+      twinState.speed=this.S.twinSpeed;
+      twinState.announced=false;
+    }
+  }
+
+  _transBegin(){
+    this.transT=0;this.transing=true;
+    const o=document.getElementById('tovl');o.classList.add('on');
+    setTimeout(()=>o.classList.remove('on'),450);
+  }
+
+  _toast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    clearTimeout(this._tt);
+    this._tt=setTimeout(()=>t.classList.remove('show'),1800);
+  }
+
+  clearField(){this.apc=0;this.sws.length=0;this.dists.length=0;this.mlc=0;this.mvc=0;this._toast('Field cleared');this._syncHud()}
+  _shockwave(x,y,rgb,r,dur=0.8){this.sws.push(new Shockwave(x,y,rgb,r,dur))}
+  addDisturbance(x,y,str=1200){this.dists.push(new Disturbance(x,y,str,2.5));this._shockwave(x,y,'58,255,160',180)}
+
+  pulse(n=52){for(let i=0;i<n;i++)this._spawn(true,i/n);this._shockwave(this.ex,this.ey,'56,217,255',220)}
+
+  _seedMom(p){
+    const c=this.S.c,v2=p.vx*p.vx+p.vy*p.vy;
+    const b2=clamp(v2/(c*c),0,SAFE_B2),g=gB2(b2);
+    p.gamma=g;p.invG=1/g;p.beta2=b2;p.speed=Math.sqrt(Math.max(v2,0));
+    p.mpx=g*p.mass*p.vx;p.mpy=g*p.mass*p.vy;p.relE=g*p.mass*c*c;
+  }
+
+  _recon(p){
+    const c=this.S.c,c2=c*c,px=p.mpx,py=p.mpy,p2=px*px+py*py;
+    if(p2<=EPS*EPS){p.vx=p.vy=0;p.speed=p.beta2=0;p.gamma=1;p.invG=1;p.relE=p.mass*c2;return}
+    const g=gP2(p2,p.mass,c),invM=1/Math.max(p.mass,EPS),invG=1/g;
+    let vx=px*invM*invG,vy=py*invM*invG,v2=vx*vx+vy*vy;
+    const lim=c2*SAFE_B2;
+    if(v2>=lim){const s=Math.sqrt(lim/Math.max(v2,EPS));vx*=s;vy*=s;v2=lim;}
+    p.vx=vx;p.vy=vy;p.speed=Math.sqrt(v2);
+    p.beta2=clamp(v2/c2,0,SAFE_B2);p.gamma=g;p.invG=invG;p.relE=g*p.mass*c2;
+  }
+
+  _spawn(forceRadial=false,phase=Math.random()){
+    if(this.apc>=MAX_P)return;
+    const p=this.ps[this.apc++];
+    const em=this.S.emitMode;
+    let angle;
+    if(forceRadial||em==='radial')angle=phase*TAU;
+    else if(em==='beam')angle=toRad(this.S.beamAngle)+rand(-1,1)*toRad(this.S.beamSpread*.5);
+    else angle=toRad(this.S.beamAngle)+rand(-1,1)*toRad(this.S.beamSpread);
+    const dx=Math.cos(angle),dy=Math.sin(angle);
+    const c=this.S.c;
+    const me=this.mode.settings.massEmergence;
+    const v0mode=this.mode.settings.referenceMode;
+    let mass=0;
+    if(v0mode){
+      // In Newtonian mode every particle has mass — no special massless class
+      mass=rand(0.12,0.4);
+    } else if(me&&Math.random()<(this._massiveFrac||0.38)){
+      mass=this.S.explorerMass>0?rand(this.S.explorerMass*.5,this.S.explorerMass):rand(0.08,0.35);
+    }
+    // v0: Newtonian particles get varied initial speeds (can be > c — that's the point)
+    const spd=v0mode ? c*rand(0.3,1.8) : (mass>0?c*clamp(this.S.explorerBeta,0.01,0.999):c);
+    p.px=this.ex;p.py=this.ey;p.vx=dx*spd;p.vy=dy*spd;
+    p.ax=p.ay=p.fx=p.fy=p.mpx=p.mpy=0;
+    p.life=rand(2.6,5.8);p.maxLife=p.life;p.properTime=0;
+    p.r=mass>0?rand(2.4,4):rand(1.4,2.6);
+    p.mass=mass;p.massless=mass<=0;p.alive=true;
+    p.dirx=dx;p.diry=dy;p.dopplerFactor=1;p.isTwin=false;
+    p.resetTrail();
+    if(p.massless){p.beta2=SAFE_B2;p.gamma=GMAX;p.invG=1/GMAX;p.speed=c;p.relE=c}
+    else this._seedMom(p);
+  }
+
+  _spawnTwin(twinIdx){
+    if(this.apc>=MAX_P-1)return;
+    const c=this.S.c;
+    // Lab twin (index 0) — stays at emitter
+    {const p=this.ps[this.apc++];
+    p.px=this.ex;p.py=this.ey;
+    p.vx=0;p.vy=0;p.ax=p.ay=p.fx=p.fy=p.mpx=p.mpy=0;
+    p.life=twinState.tripDur*2+3;p.maxLife=p.life;p.properTime=0;
+    p.r=5;p.mass=1;p.massless=false;p.alive=true;
+    p.gamma=1;p.invG=1;p.beta2=0;p.speed=0;p.relE=c*c;
+    p.isTwin=true;p.twinIdx=0;p.dopplerFactor=1;p.dirx=1;p.diry=0;p.resetTrail();}
+    // Travelling twin (index 1)
+    {const p=this.ps[this.apc++];
+    const spd=c*clamp(twinState.speed,0.05,0.995);
+    p.px=this.ex;p.py=this.ey;
+    p.vx=spd;p.vy=0;p.ax=p.ay=p.fx=p.fy=0;
+    p.life=twinState.tripDur*2+3;p.maxLife=p.life;p.properTime=0;
+    p.r=4;p.mass=1;p.massless=false;p.alive=true;
+    p.isTwin=true;p.twinIdx=1;p.dopplerFactor=1;
+    p.dirx=1;p.diry=0;p.resetTrail();
+    this._seedMom(p);}
+  }
+
+  _masslessPropSpd(p){
+    if(this.mode.settings.medium){
+      const z=this.medZ,dx=p.px-z.x,dy=p.py-z.y;
+      if(dx*dx+dy*dy<z.r*z.r)return this.S.c/this.S.refractN;
+    }
+    return this.S.c;
+  }
+
+  _applyDists(p){
+    for(let i=0;i<this.dists.length;i++){
+      const d=this.dists[i];
+      const dx=p.px-d.x,dy=p.py-d.y,r2=dx*dx+dy*dy+120,inv=1/Math.sqrt(r2);
+      const tx=-dy*inv,ty=dx*inv,fade=1-clamp(d.t/d.dur,0,1),inf=(d.str*fade/r2)*160000;
+      p.fx+=tx*inf;p.fy+=ty*inf;
+    }
+  }
+  _applyGrav(p){
+    const g=this.gravW,str=this.S.gravStr;
+    const dx=g.x-p.px,dy=g.y-p.py,r2=dx*dx+dy*dy+1800,r=Math.sqrt(r2),inv=1/r,s=str/r2;
+    p.fx+=dx*inv*s;p.fy+=dy*inv*s;
+    // NOTE: no tangential swirl — real GR lensing is a purely radial (geodesic) effect
+  }
+  _applyMed(p){
+    // Snell's law refraction: only redirect at the boundary, not inside.
+    // We detect crossing: if particle is very near the boundary circle, apply
+    // the angle correction once (snap direction to satisfy n1*sinθ1 = n2*sinθ2).
+    const z=this.medZ,n=this.S.refractN;
+    const dx=p.px-z.x,dy=p.py-z.y,r=Math.hypot(dx,dy);
+    const tol=4; // boundary thickness in px
+    const inside=(r<z.r);
+    if(Math.abs(r-z.r)<=tol){
+      // Normal at boundary: radially outward
+      const nx=dx/(r||1),ny=dy/(r||1);
+      const spd=Math.hypot(p.vx,p.vy)||1;
+      const ux=p.vx/spd,uy=p.vy/spd;
+      // cosine of incidence angle
+      const cosI=Math.abs(ux*nx+uy*ny);
+      const sinI=Math.sqrt(Math.max(0,1-cosI*cosI));
+      // n1, n2 depending on direction of travel (entering or leaving)
+      const travelDot=ux*nx+uy*ny; // positive = moving outward
+      const n1=inside?n:1, n2=inside?1:n;
+      const sinT=n1*sinI/n2;
+      if(sinT>=1){
+        // Total internal reflection: reverse normal component
+        p.vx-=2*(p.vx*nx+p.vy*ny)*nx;
+        p.vy-=2*(p.vx*nx+p.vy*ny)*ny; // reflects off boundary
+      } else {
+        const cosT=Math.sqrt(1-sinT*sinT);
+        // Tangential component of unit velocity
+        const tx=ux-cosI*(travelDot>0?1:-1)*nx,ty=uy-cosI*(travelDot>0?1:-1)*ny;
+        const tl=Math.hypot(tx,ty)||1;
+        const txN=tx/tl,tyN=ty/tl;
+        const sign=travelDot>0?1:-1;
+        p.vx=(txN*sinT + sign*nx*cosT)*spd;
+        p.vy=(tyN*sinT + sign*ny*cosT)*spd;
+        // For massless: renormalise to correct propagation speed
+        if(p.massless){
+          const target=inside?this.S.c:this.S.c/n;
+          const nl=Math.hypot(p.vx,p.vy)||1;
+          p.vx=p.vx/nl*target; p.vy=p.vy/nl*target;
+        }
+      }
+    }
+  }
+
+  _updMassless(p,dt){
+    const c=this._masslessPropSpd(p);
+    let vx=p.vx,vy=p.vy;const vl=safeL(vx,vy);vx/=vl;vy/=vl;
+    let ux=p.fx*dt,uy=p.fy*dt;
+    const md=c*.92,ul2=ux*ux+uy*uy;
+    if(ul2>md*md){const s=md/Math.sqrt(ul2);ux*=s;uy*=s}
+    const uPar=ux*vx+uy*vy,upx=ux-vx*uPar,upy=uy-vy*uPar;
+    const dn=1+(uPar*c)/(c*c);const sdn=Math.abs(dn)<1e-5?(dn<0?-1e-5:1e-5):dn;
+    let ox=vx*((c+uPar)/sdn)+upx/(GMAX*sdn),oy=vy*((c+uPar)/sdn)+upy/(GMAX*sdn);
+    const ol=safeL(ox,oy);p.vx=ox*c/ol;p.vy=oy*c/ol;
+    p.speed=c;p.beta2=SAFE_B2;p.gamma=GMAX;p.invG=1/GMAX;
+    p.dirx=p.vx/c;p.diry=p.vy/c;p.relE=c;
+  }
+
+  _updMassive(p,dt){
+    const c=this.S.c,c2=c*c,m=Math.max(p.mass,EPS);
+    const vx=p.vx,vy=p.vy,v2=vx*vx+vy*vy,spd=Math.sqrt(Math.max(v2,0));
+    const is=spd>EPS?1/spd:0,ux=vx*is,uy=vy*is;
+    const fx=p.fx,fy=p.fy;
+    if(this.mode.settings.referenceMode){
+      // TRUE Newtonian: a = F/m, no gamma factor, no speed cap
+      p.ax=fx/m; p.ay=fy/m;
+      p.vx+=p.ax*dt; p.vy+=p.ay*dt;
+      const v2n=p.vx*p.vx+p.vy*p.vy;
+      p.speed=Math.sqrt(v2n);
+      // In Newtonian mode gamma is meaningless, keep=1 for display
+      p.gamma=1;p.invG=1;p.beta2=clamp(v2n/c2,0,1);
+      p.relE=p.mass*c2; // classical: E=mc² (rest), KE shown separately
+      p.mpx=p.mass*p.vx;p.mpy=p.mass*p.vy;
+    } else {
+      const fPar=fx*ux+fy*uy;
+      const fpx=fx-ux*fPar,fpy=fy-uy*fPar;
+      const b2=clamp(v2/c2,0,SAFE_B2),g=gB2(b2),g3=g*g*g;
+      p.ax=(ux*fPar/(g3*m))+fpx/(g*m);p.ay=(uy*fPar/(g3*m))+fpy/(g*m);
+      p.mpx+=fx*dt;p.mpy+=fy*dt;
+      this._recon(p);
+    }
+    p.dirx=p.speed>EPS?p.vx/p.speed:ux;p.diry=p.speed>EPS?p.vy/p.speed:uy;
+  }
+
+  _calcDoppler(p){
+    // relativistic doppler from observer point to particle velocity
+    const ox=this.S.dopplerObsX*this.W,oy=this.S.dopplerObsY*this.H;
+    const dx=p.px-ox,dy=p.py-oy,r=safeL(dx,dy);
+    const rx=dx/r,ry=dy/r; // unit vector from observer to particle
+    const c=this.S.c;
+    const vDotR=(p.vx*rx+p.vy*ry)/Math.max(c,EPS);
+    const beta=clamp(vDotR,-0.9999,0.9999);
+    // relativistic doppler factor: sqrt((1+beta)/(1-beta))
+    p.dopplerFactor=Math.sqrt((1+beta)/Math.max(1-beta,EPS));
+  }
+
+  _updateTwin(dt){
+    const ts=twinState;
+    ts.lapTime+=dt;
+    ts.labClock+=dt;
+    // find travelling twin particle
+    let trav=null;
+    for(let i=0;i<this.apc;i++){if(this.ps[i].isTwin&&this.ps[i].twinIdx===1){trav=this.ps[i];break}}
+    if(trav){
+      const g=trav.gamma||1;
+      ts.travelClock+=dt/Math.max(g,1);
+    }
+    // phase transitions
+    if(ts.phase==='out'&&ts.lapTime>=ts.tripDur){
+      ts.phase='return';ts.lapTime=0;
+      if(trav){
+        // Snap to pure -x travel: mirror outgoing leg exactly
+        const spd=this.S.c*clamp(ts.speed,0.05,0.995);
+        trav.vx=-spd;trav.vy=0;
+        trav.mpx=-trav.mass*spd;trav.mpy=0;
+        this._seedMom(trav);
+      }
+      this._shockwave(this.ex,this.ey,'192,96,255',180);
+      this._toast('Twin returns! Watch the clock gap...');
+    } else if(ts.phase==='return'&&ts.lapTime>=ts.tripDur){
+      ts.phase='done';
+      if(!ts.announced){ts.announced=true;
+        this._toast(`Age gap: ${(ts.labClock-ts.travelClock).toFixed(2)}s — traveller is younger!`);}
+    }
+  }
+
+  update(dtRaw){
+    this.frame++;
+    const dt=clamp(dtRaw*this.S.timeScale,0,.033);
+    if(this.paused){this._syncHud();return}
+    this.rt+=dt;
+
+    // Twin paradox: spawn twins at start
+    if(this.mode.settings.twinParadox&&this.apc===0&&this.frame%10===2){
+      this._spawnTwin(0);twinState.phase='out';twinState.lapTime=0;
+      twinState.labClock=0;twinState.travelClock=0;twinState.announced=false;
+      twinState.tripDur=this.S.twinTripDur;twinState.speed=this.S.twinSpeed;
+    }
+    if(this.mode.settings.twinParadox&&this.apc>0)this._updateTwin(dt);
+
+    if(!this.mode.settings.twinParadox){
+      this.spawnAcc+=dt*this.S.spawnRate;
+      while(this.spawnAcc>=1){this.spawnAcc-=1;this._spawn(false)}
+    }
+
+    for(let i=this.sws.length-1;i>=0;i--){this.sws[i].upd(dt);if(!this.sws[i].alive)this.sws.splice(i,1)}
+    for(let i=this.dists.length-1;i>=0;i--){this.dists[i].upd(dt);if(!this.dists[i].alive)this.dists.splice(i,1)}
+
+    let wr=0,mlc=0,mvc=0;const mg=80,tl=this.S.trailLen;
+
+    for(let i=0;i<this.apc;i++){
+      const p=this.ps[i];if(!p.alive)continue;
+      p.fx=0;p.fy=0;p.ax=0;p.ay=0;
+      if(this.mode.settings.medium)this._applyMed(p);
+      if(this.mode.settings.gravity)this._applyGrav(p);
+      this._applyDists(p);
+
+      if(p.massless&&!this.mode.settings.referenceMode)this._updMassless(p,dt);
+      else this._updMassive(p,dt);
+
+      const pdt=p.massless?dt:dt*p.invG;
+      p.properTime+=pdt;p.life-=pdt;
+      if(p.life<=0){p.alive=false;continue}
+
+      p.px+=p.vx*dt;p.py+=p.vy*dt;
+
+      // Twin: keep lab twin at emitter, bound travel twin
+      if(p.isTwin){
+        if(p.twinIdx===0){p.px=this.ex;p.py=this.ey;p.vx=0;p.vy=0}
+        if(p.twinIdx===1&&twinState.phase==='done'){
+          // slow to stop
+          p.vx*=0.96;p.vy*=0.96;
+          if(Math.hypot(p.vx,p.vy)<0.5){p.vx=0;p.vy=0}
+          this._seedMom(p);
+        }
+      }
+
+      if(this.mode.settings.doppler)this._calcDoppler(p);
+      else p.dopplerFactor=1;
+
+      const tdt=p.massless?dt:dt*clamp(p.invG*1.2,.18,1);
+      p.tAcc+=tdt;if(p.tAcc>=.014){p.pushTrail(tl);p.tAcc=0}
+
+      if(p.massless){
+        p.vGlow=1.4;p.vEnergy=1.1+.14*Math.sin(this.rt*4+i*.03);p.vComp=1;
+      } else {
+        const g=p.gamma;p.vGlow=clamp(.9+(g-1)*.5,.9,7);
+        p.vEnergy=clamp(.8+p.relE/Math.max(p.mass*this.S.c*this.S.c,1),.9,9);
+        p.vComp=clamp(p.invG,.18,1);
+      }
+
+      if(!isFinite(p.px)||!isFinite(p.py)||!isFinite(p.vx)||!isFinite(p.vy)||!isFinite(p.gamma)||!isFinite(p.relE)){p.alive=false;continue}
+      if(p.px<-mg||p.px>this.W+mg||p.py<-mg||p.py>this.H+mg){p.alive=false;continue}
+
+      this.ps[wr++]=p;
+      if(p.massless)mlc++;else mvc++;
+    }
+    this.apc=wr;this.mlc=mlc;this.mvc=mvc;
+    this._fpsN++;this._fpsT+=dtRaw;
+    if(this._fpsT>=.25){this.fps=Math.round(this._fpsN/this._fpsT);this._fpsN=0;this._fpsT=0}
+    this._syncHud();
+
+    // update doppler info bar
+    if(this.mode.settings.doppler){
+      // average doppler of a sample
+      let sum=0,cnt=0;
+      for(let i=0;i<Math.min(this.apc,30);i++){sum+=this.ps[i].dopplerFactor;cnt++}
+      const avg=cnt?sum/cnt:1;
+      document.getElementById('dopplerInfo').textContent=`avg factor=${avg.toFixed(3)} · obs @(${Math.round(this.S.dopplerObsX*100)}%,${Math.round(this.S.dopplerObsY*100)}%)`;
+    }
+  }
+
+  _syncHud(){
+    document.getElementById('mMode').textContent=this.mode.id.toUpperCase();
+    document.getElementById('mPart').textContent=this.apc;
+    document.getElementById('mLight').textContent=this.mlc;
+    document.getElementById('mHeavy').textContent=this.mvc;
+    document.getElementById('mC').textContent=Math.round(this.S.c);
+    document.getElementById('mState').textContent=this.paused?'PAUSE':'RUN';
+    document.getElementById('fpslabel').textContent=`${this.fps} FPS`;
+    document.getElementById('statuslabel').textContent=`${this.mode.id} · ${this.paused?'PAUSED':'LIVE'}`;
+  }
+}
+
+// ── Doppler colour helper ─────────────────────────────────────────────
+function dopplerToRGB(factor){
+  // factor >1 = blueshift, <1 = redshift
+  // map log(factor) to hue
+  const logF=Math.log(clamp(factor,.01,20));
+  const t=clamp((logF+2)/4,0,1); // 0=red, 1=blue
+  // red → orange → yellow → green → cyan → blue → violet
+  const hue=lerp(0,260,t);
+  return hslToRgb(hue/360,.9,.6);
+}
+function hslToRgb(h,s,l){
+  let r,g,b;
+  if(!s){r=g=b=l}else{
+    const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+    r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);
+  }
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function hue2rgb(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p}
+
+// ── Renderer ──────────────────────────────────────────────────────────
+class Renderer{
+  constructor(eng,ctx){
+    this.eng=eng;this.ctx=ctx;
+    this.stars=Array.from({length:240},()=>({x:Math.random(),y:Math.random(),r:rand(.3,1.8),a:rand(.08,.75),ph:Math.random()*TAU}));
+  }
+
+  clear(){
+    const {ctx,eng}=this;const{W,H,rt}=eng;
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#03060e');g.addColorStop(.5,'#04091a');g.addColorStop(1,'#060c18');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // subtle nebula
+    const nb=ctx.createRadialGradient(W*.35,H*.4,0,W*.35,H*.4,W*.45);
+    nb.addColorStop(0,'rgba(30,50,120,.06)');nb.addColorStop(1,'transparent');
+    ctx.fillStyle=nb;ctx.fillRect(0,0,W,H);
+    const nb2=ctx.createRadialGradient(W*.72,H*.65,0,W*.72,H*.65,W*.35);
+    nb2.addColorStop(0,'rgba(80,20,100,.05)');nb2.addColorStop(1,'transparent');
+    ctx.fillStyle=nb2;ctx.fillRect(0,0,W,H);
+    // stars
+    ctx.save();
+    for(const s of this.stars){
+      const x=s.x*W,y=s.y*H;const a=s.a+Math.sin(rt*.6+s.ph)*.06;
+      ctx.globalAlpha=clamp(a,.03,.85);ctx.fillStyle='#d8eeff';
+      ctx.beginPath();ctx.arc(x,y,s.r,0,TAU);ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  drawCone(){
+    const {ctx,eng}=this;const{W,H,ex,ey,S,mode}=eng;
+    if(!S.showCone)return;
+    const cS=clamp(S.c*.68,100,340),topY=Math.max(44,ey-cS*.9),botY=Math.min(H-44,ey+cS*.9);
+    const span=clamp(cS*1.18,100,Math.min(W*.44,380));
+    ctx.save();
+    // cone fill
+    const grad=ctx.createLinearGradient(ex,topY,ex,botY);
+    grad.addColorStop(0,'rgba(56,217,255,.05)');grad.addColorStop(.5,'rgba(120,100,255,.10)');grad.addColorStop(1,'rgba(56,217,255,.05)');
+    ctx.fillStyle=grad;
+    [[botY],[topY]].forEach(([ty])=>{
+      ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-span,ty);ctx.lineTo(ex+span,ty);ctx.closePath();ctx.fill();
+    });
+    // cone edges with glow
+    ctx.shadowBlur=8;ctx.shadowColor='rgba(56,217,255,.35)';
+    ctx.strokeStyle='rgba(56,217,255,.28)';ctx.lineWidth=1.2;
+    ctx.beginPath();
+    [[ex-span,botY],[ex+span,botY],[ex-span,topY],[ex+span,topY]].forEach(([tx,ty])=>{ctx.moveTo(ex,ey);ctx.lineTo(tx,ty)});
+    ctx.stroke();ctx.shadowBlur=0;
+    // labels
+    if(mode.settings.coneFocus){
+      ctx.font='bold 10px "Space Mono",monospace';
+      ctx.fillStyle='rgba(56,217,255,.8)';ctx.fillText('LIGHTLIKE SURFACE — β=1',ex+16,ey-12);
+      ctx.fillStyle='rgba(255,208,64,.7)';ctx.fillText('TIMELIKE INTERIOR — massive',ex+16,ey+20);
+      ctx.fillStyle='rgba(255,90,90,.5)';ctx.font='10px "Space Mono",monospace';
+      ctx.fillText('SPACELIKE — FORBIDDEN',ex-span+6,topY+16);
+      ctx.fillText('SPACELIKE — FORBIDDEN',ex-span+6,botY-8);
+    } else {
+      ctx.fillStyle='rgba(180,210,255,.6)';ctx.font='10px "Space Mono",monospace';
+      ctx.fillText('causal cone',ex+10,ey-8);
+    }
+    ctx.restore();
+  }
+
+  drawFields(){
+    const {ctx,eng}=this;const{mode,medZ,gravW,S,rt}=eng;
+    if(mode.settings.medium){
+      ctx.save();
+      const g=ctx.createRadialGradient(medZ.x,medZ.y,medZ.r*.1,medZ.x,medZ.y,medZ.r);
+      g.addColorStop(0,'rgba(255,150,50,.14)');g.addColorStop(1,'rgba(255,140,40,.02)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(medZ.x,medZ.y,medZ.r,0,TAU);ctx.fill();
+      // animated boundary
+      const pulse=.5+.5*Math.sin(rt*1.5);
+      ctx.strokeStyle=`rgba(255,150,50,${.25+pulse*.15})`;ctx.lineWidth=1.6;
+      ctx.shadowBlur=10;ctx.shadowColor='rgba(255,140,40,.4)';ctx.stroke();ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,200,100,.92)';ctx.font='bold 12px "Space Mono",monospace';ctx.textAlign='center';
+      ctx.fillText(`n = ${S.refractN.toFixed(2)}`,medZ.x,medZ.y-5);
+      ctx.font='9px "Space Mono",monospace';ctx.fillStyle='rgba(255,180,70,.7)';
+      ctx.fillText(`v = c/${S.refractN.toFixed(2)} = ${(S.c/S.refractN).toFixed(0)} px/s`,medZ.x,medZ.y+12);
+      ctx.textAlign='left';ctx.restore();
+    }
+    if(mode.settings.gravity){
+      ctx.save();
+      const str=S.gravStr,normStr=clamp(str/50000,0,1);
+      // animated rings
+      for(let i=1;i<=7;i++){
+        const r=gravW.r+i*22+Math.sin(rt*.8+i)*.5;
+        ctx.beginPath();ctx.arc(gravW.x,gravW.y,r,0,TAU);
+        ctx.strokeStyle=`rgba(255,80,80,${clamp(.16-i*.018,0,.14)})`;ctx.lineWidth=1;ctx.stroke();
+      }
+      const g=ctx.createRadialGradient(gravW.x,gravW.y,gravW.r*.08,gravW.x,gravW.y,gravW.r*4.5);
+      g.addColorStop(0,`rgba(255,80,80,${.22+normStr*.2})`);g.addColorStop(.5,'rgba(120,60,200,.06)');g.addColorStop(1,'rgba(80,40,160,.01)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(gravW.x,gravW.y,gravW.r*4.5,0,TAU);ctx.fill();
+      ctx.beginPath();ctx.arc(gravW.x,gravW.y,gravW.r,0,TAU);
+      ctx.fillStyle=`rgba(255,80,80,${.18+normStr*.28})`;ctx.fill();
+      ctx.strokeStyle=`rgba(255,80,80,${.5+normStr*.3})`;ctx.lineWidth=1.8;
+      ctx.shadowBlur=14;ctx.shadowColor='rgba(255,80,80,.5)';ctx.stroke();ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,160,160,.9)';ctx.font='bold 10px "Space Mono",monospace';
+      ctx.fillText(`G: ${Math.round(str/1000)}k`,gravW.x+gravW.r+10,gravW.y-gravW.r-8);
+      ctx.restore();
+    }
+    // Doppler observer point
+    if(mode.settings.doppler){
+      const ox=S.dopplerObsX*eng.W,oy=S.dopplerObsY*eng.H;
+      ctx.save();
+      const pulse=.5+.5*Math.sin(rt*3);
+      ctx.beginPath();ctx.arc(ox,oy,12+pulse*4,0,TAU);
+      ctx.strokeStyle=`rgba(192,96,255,${.4+pulse*.2})`;ctx.lineWidth=1.5;
+      ctx.shadowBlur=15;ctx.shadowColor='rgba(192,96,255,.7)';ctx.stroke();ctx.shadowBlur=0;
+      ctx.beginPath();ctx.arc(ox,oy,4,0,TAU);ctx.fillStyle='rgba(192,96,255,.9)';ctx.fill();
+      ctx.fillStyle='rgba(200,150,255,.85)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText('OBS',ox+14,oy-8);
+      ctx.restore();
+    }
+    // Twin paradox clocks
+    if(mode.settings.twinParadox){
+      ctx.save();
+      const ts=twinState;
+      const cx2=eng.ex+140,cy2=eng.ey;
+      ctx.fillStyle='rgba(4,8,18,.88)';ctx.strokeStyle='rgba(56,217,255,.25)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.roundRect(cx2,cy2-52,180,56,10);ctx.fill();ctx.stroke();
+      ctx.font='bold 10px "Space Mono",monospace';
+      ctx.fillStyle='rgba(56,217,255,.9)';ctx.fillText(`LAB  clock: ${ts.labClock.toFixed(3)}s`,cx2+10,cy2-32);
+      ctx.fillStyle='rgba(192,96,255,.9)';ctx.fillText(`TRAV clock: ${ts.travelClock.toFixed(3)}s`,cx2+10,cy2-14);
+      const diff=ts.labClock-ts.travelClock;
+      ctx.fillStyle=diff>0.05?'rgba(255,200,60,.9)':'rgba(120,180,120,.7)';
+      ctx.fillText(`Δ age: ${diff.toFixed(3)}s`,cx2+10,cy2+6);
+      ctx.fillStyle='rgba(100,140,200,.6)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText(`Phase: ${ts.phase.toUpperCase()} γ=${gB2(ts.speed**2).toFixed(3)}`,cx2+10,cy2+22);
+      ctx.restore();
+    }
+    for(let i=0;i<eng.dists.length;i++){
+      const d=eng.dists[i];const p=clamp(d.t/d.dur,0,1);
+      ctx.save();ctx.beginPath();ctx.arc(d.x,d.y,15+eoc(p)*75,0,TAU);
+      ctx.strokeStyle=`rgba(58,255,160,${(1-p)*.14})`;ctx.lineWidth=2;ctx.stroke();ctx.restore();
+    }
+  }
+
+  drawEmitter(){
+    const {ctx,eng}=this;const{ex,ey,rt,S}=eng;
+    const pulse=.5+.5*Math.sin(rt*5);
+    ctx.save();ctx.translate(ex,ey);
+    // direction hint
+    const ang=toRad(S.beamAngle);
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(ang)*52,Math.sin(ang)*52);
+    ctx.strokeStyle='rgba(180,210,255,.18)';ctx.lineWidth=1;ctx.stroke();
+    // outer glow rings
+    for(let i=0;i<3;i++){
+      ctx.beginPath();ctx.arc(0,0,28+i*12+pulse*3,0,TAU);
+      ctx.strokeStyle=`rgba(56,217,255,${.06-i*.016})`;ctx.lineWidth=1;ctx.stroke();
+    }
+    // core
+    const rg=ctx.createRadialGradient(0,0,1,0,0,24);
+    rg.addColorStop(0,'rgba(255,255,255,.98)');
+    rg.addColorStop(.3,'rgba(140,230,255,.85)');
+    rg.addColorStop(.7,'rgba(56,217,255,.4)');
+    rg.addColorStop(1,'transparent');
+    ctx.fillStyle=rg;ctx.beginPath();ctx.arc(0,0,24+pulse*5,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.arc(0,0,5+pulse*1.5,0,TAU);ctx.fillStyle='rgba(255,255,255,.98)';
+    ctx.shadowBlur=18;ctx.shadowColor='rgba(56,217,255,.9)';ctx.fill();ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
+  drawTrails(ml){
+    const {ctx,eng}=this;const n=eng.apc;
+    for(let i=0;i<n;i++){
+      const p=eng.ps[i];if(p.massless!==ml)continue;if(p.tc<2)continue;
+      let strokeColor;
+      if(p.isTwin){strokeColor=p.twinIdx===0?`rgba(56,217,255,.3)`:`rgba(192,96,255,.3)`}
+      else if(eng.mode.settings.doppler){
+        const[r,g,b]=dopplerToRGB(p.dopplerFactor);
+        strokeColor=`rgba(${r},${g},${b},.22)`;
+      } else {
+        const ea=ml?.16+.03*Math.sin(eng.rt*5+i*.01):clamp(.07+(p.gamma-1)*.05,.07,.4);
+        strokeColor=ml?`rgba(56,217,255,${ea})`:`rgba(255,210,50,${ea})`;
+      }
+      ctx.beginPath();
+      for(let t=1;t<p.tc;t++){
+        const bi=(p.th-t+MAX_TR)%MAX_TR,ai=(p.th-t-1+MAX_TR)%MAX_TR;
+        ctx.moveTo(p.tx[ai],p.ty[ai]);ctx.lineTo(p.tx[bi],p.ty[bi]);
+      }
+      ctx.strokeStyle=strokeColor;
+      ctx.lineWidth=p.isTwin?2.5:ml?1.5:clamp(1+(p.vGlow*.16),1,2.8);
+      ctx.lineCap='round';ctx.stroke();
+    }
+  }
+
+  drawParticles(ml){
+    const {ctx,eng}=this;const n=eng.apc;const mode=eng.mode;
+    for(let i=0;i<n;i++){
+      const p=eng.ps[i];if(p.massless!==ml)continue;
+      const age=clamp(p.life/p.maxLife,0,1);
+      const gB=p.vGlow,comp=p.vComp;
+      const dx=p.dirx||1,dy=p.diry||0;
+
+      let cr,cg,cb,hA,sCol,isSpecial=false;
+
+      if(p.isTwin){
+        isSpecial=true;
+        if(p.twinIdx===0){cr=56;cg=217;cb=255;sCol='rgba(56,217,255,.9)'}
+        else{cr=192;cg=96;cb=255;sCol='rgba(192,96,255,.9)'}
+        hA=.75;
+      } else if(mode.settings.doppler){
+        const[r,g,b]=dopplerToRGB(p.dopplerFactor);
+        cr=r;cg=g;cb=b;hA=.55;sCol=`rgba(${r},${g},${b},.9)`;
+      } else {
+        if(ml){cr=56;cg=217;cb=255;sCol='rgba(56,217,255,.85)';hA=.45}
+        else{cr=255;cg=208;cb=50;sCol='rgba(255,210,50,.9)';hA=clamp(.2+(gB-1)*.05,.22,.65)}
+      }
+
+      const hR=p.r*(ml?2+age*.3:clamp(1.8+gB*.22,1.9,4.8));
+      const sBlur=p.isTwin?20:ml?12:clamp(8+gB*5,12,40);
+
+      ctx.save();
+      ctx.shadowBlur=sBlur;ctx.shadowColor=sCol;
+      ctx.fillStyle=`rgba(${cr},${cg},${cb},${hA})`;
+      ctx.beginPath();ctx.arc(p.px,p.py,hR,0,TAU);ctx.fill();
+
+      if(!ml&&!isSpecial){
+        // Lorentz-compressed glow shell
+        ctx.shadowBlur=0;ctx.beginPath();
+        ctx.ellipse(p.px-dx*hR*.2,p.py-dy*hR*.2,hR*(.5+.3*comp),hR*.2,Math.atan2(dy,dx),0,TAU);
+        ctx.fillStyle=`rgba(255,255,255,${clamp(.08+(p.gamma-1)*.025,.08,.28)})`;ctx.fill();
+        // γ label
+        if(mode.settings.massEmergence&&p.gamma>1.05){
+          ctx.shadowBlur=0;ctx.fillStyle='rgba(255,220,80,.88)';ctx.font='9px "Space Mono",monospace';
+          ctx.fillText(`γ=${p.gamma.toFixed(2)}`,p.px+hR+3,p.py-3);
+        }
+      }
+
+      if(ml&&!isSpecial&&(mode.id==='v1'||mode.id==='v4')&&Math.random()<.004){
+        ctx.shadowBlur=0;ctx.fillStyle='rgba(56,217,255,.75)';ctx.font='9px "Space Mono",monospace';
+        ctx.fillText('β=1',p.px+hR+2,p.py-2);
+      }
+
+      // Twin labels
+      if(p.isTwin){
+        ctx.shadowBlur=0;ctx.font='bold 10px "Space Mono",monospace';
+        ctx.fillStyle=p.twinIdx===0?'rgba(56,217,255,.9)':'rgba(192,96,255,.9)';
+        const lbl=p.twinIdx===0?'LAB':'TRAV';
+        ctx.fillText(lbl,p.px+hR+4,p.py-3);
+        if(p.twinIdx===1&&p.gamma>1.01){
+          ctx.font='8px "Space Mono",monospace';ctx.fillStyle='rgba(192,96,255,.7)';
+          ctx.fillText(`γ=${p.gamma.toFixed(2)}`,p.px+hR+4,p.py+9);
+        }
+      }
+
+      // Doppler factor label (sparse)
+      if(mode.settings.doppler&&!p.massless&&Math.random()<.008){
+        ctx.shadowBlur=0;const[r,g,b]=dopplerToRGB(p.dopplerFactor);
+        ctx.fillStyle=`rgba(${r},${g},${b},.8)`;ctx.font='8px "Space Mono",monospace';
+        ctx.fillText(`×${p.dopplerFactor.toFixed(2)}`,p.px+hR+2,p.py);
+      }
+
+      // core dot
+      ctx.fillStyle=`rgba(255,255,255,${p.isTwin?.96:.92})`;
+      ctx.beginPath();ctx.arc(p.px,p.py,p.r*.85+(p.isTwin?.5:0),0,TAU);ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  drawShockwaves(){for(const sw of this.eng.sws)sw.draw(this.ctx)}
+
+  drawAnnotations(){
+    const {ctx,eng}=this;const{mode,W,H,S,rt}=eng;
+    ctx.save();
+    // bottom left annotations
+    const botY=H-52;
+    ctx.font='10px "Space Mono",monospace';
+    if(mode.id==='v0'){
+      ctx.fillStyle='rgba(255,200,80,.9)';
+      ctx.fillText('⚠ Newtonian: F = ma, no γ, no speed limit',16,botY+16);
+      ctx.fillStyle='rgba(180,210,255,.55)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText('Particles accelerate beyond c — switch to v1 for SR',16,botY+32);
+    } else if(mode.id==='v1'){
+      ctx.fillStyle='rgba(56,217,255,.9)';
+      ctx.fillText('ALL massless: β = 1.00 exactly (invariant speed c)',16,botY+16);
+      ctx.fillStyle='rgba(180,210,255,.55)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText('Forces rotate direction only — speed is constant',16,botY+32);
+    } else if(mode.id==='v2'){
+      ctx.fillStyle='rgba(255,155,55,.9)';
+      ctx.fillText(`Inside medium: v = c/${S.refractN.toFixed(2)} = ${(S.c/S.refractN).toFixed(0)} px/s`,16,botY+16);
+      ctx.fillStyle='rgba(180,210,255,.55)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText(`Outside: v = c = ${Math.round(S.c)} px/s  (Snell's law at boundary)`,16,botY+32);
+    } else if(mode.id==='v3'){
+      ctx.fillStyle='rgba(255,100,100,.9)';
+      ctx.fillText('Spacetime curvature bends both massive & massless paths',16,botY+16);
+      ctx.fillStyle='rgba(180,210,255,.55)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText('Einstein 1915 · Confirmed Eddington 1919',16,botY+32);
+    } else if(mode.id==='v4'){
+      ctx.fillStyle='rgba(56,217,255,.9)';
+      ctx.fillText('BLUE = lightlike surface (β=1)',16,botY+16);
+      ctx.fillStyle='rgba(255,208,64,.9)';ctx.font='10px "Space Mono",monospace';
+      ctx.fillText('YELLOW = timelike interior (β<1)',16,botY+32);
+    } else if(mode.id==='v5'){
+      ctx.fillStyle='rgba(56,217,255,.9)';ctx.fillText('BLUE massless: β=1',16,botY+16);
+      ctx.fillStyle='rgba(255,208,64,.9)';ctx.font='10px "Space Mono",monospace';
+      ctx.fillText('YELLOW massive: β<1, γ shown — use mass slider',16,botY+32);
+    } else if(mode.id==='v6'){
+      ctx.fillStyle='rgba(192,96,255,.9)';
+      ctx.fillText('Relativistic Doppler: blueshift=approach, redshift=recession',16,botY+16);
+      ctx.fillStyle='rgba(180,210,255,.55)';ctx.font='9px "Space Mono",monospace';
+      ctx.fillText('f_obs = f_src × √((1+β)/(1−β))  ·  drag OBS marker',16,botY+32);
+    } else if(mode.id==='v7'){
+      const ts=twinState;
+      ctx.fillStyle='rgba(56,217,255,.9)';
+      ctx.fillText(`LAB twin: ${ts.labClock.toFixed(2)}s  |  TRAVELLER: ${ts.travelClock.toFixed(2)}s`,16,botY+16);
+      ctx.fillStyle='rgba(192,96,255,.9)';ctx.font='10px "Space Mono",monospace';
+      ctx.fillText(`Δ proper time = ${(ts.labClock-ts.travelClock).toFixed(3)}s  [${ts.phase.toUpperCase()}]`,16,botY+32);
+    }
+    ctx.restore();
+  }
+
+  render(){
+    this.clear();
+    this.drawCone();
+    this.drawFields();
+    this.drawShockwaves();
+    this.drawTrails(true);this.drawTrails(false);
+    this.drawParticles(true);this.drawParticles(false);
+    this.drawEmitter();
+    this.drawAnnotations();
+  }
+}
+
+// ── Card Manager ──────────────────────────────────────────────────────
+const CardMgr={
+  el:null,mid:null,
+  show(mode){
+    if(this.mid===mode.id&&this.el)return;
+    if(this.el){const o=this.el;o.classList.remove('show');setTimeout(()=>o.remove(),400)}
+    const c=document.createElement('div');c.className='card pane';
+    const accent=mode.isNew?'rgba(192,96,255,.35)':'rgba(56,217,255,.25)';
+    c.style.borderColor=accent;
+    c.innerHTML=`
+      <div class="ctop">
+        <div class="ckick">${mode.id.toUpperCase()} · ${mode.tag}${mode.isNew?' <span style="color:#c060ff;font-size:8px">★ NEW</span>':''}</div>
+        <button class="xbtn">⌄</button>
+        <div class="ctitle" style="color:${mode.isNew?'#e0b8ff':'#ddeeff'}">${mode.name}</div>
+        <div class="csub">${mode.what.slice(0,110)}…</div>
+      </div>
+      <div class="cbody">
+        <div class="csec"><h4>What to observe</h4><p>${mode.what}</p></div>
+        <div class="csec"><h4>Real physics</h4><p>${mode.why}</p></div>
+        <div class="csec"><h4>Key takeaway</h4><p>${mode.learn}</p></div>
+      </div>`;
+    c.querySelector('.xbtn').addEventListener('click',()=>c.classList.toggle('exp'));
+    document.getElementById('cards').appendChild(c);
+    requestAnimationFrame(()=>c.classList.add('show'));
+    this.el=c;this.mid=mode.id;
+    if(!engine.S.autoCards)return;
+    clearTimeout(this._ct);clearTimeout(this._ht);
+    this._ct=setTimeout(()=>{if(c.isConnected)c.classList.remove('exp')},5500);
+    this._ht=setTimeout(()=>{
+      if(c.isConnected&&!c.classList.contains('exp')){c.classList.remove('show');setTimeout(()=>{if(c.isConnected)c.remove();if(this.el===c){this.el=null;this.mid=null}},400)}
+    },10000);
+  }
+};
+
+// ── Mode controls ─────────────────────────────────────────────────────
+function updateModeControls(mode){
+  const box=document.getElementById('modecontrols');
+  const inner=document.getElementById('mcinner');
+  const lbl=document.getElementById('mclabel');
+  inner.innerHTML='';
+  if(mode.settings.medium){
+    box.style.display='block';lbl.textContent='⟳ Medium Controls';
+    inner.innerHTML=`
+      <div class="row2"><label>Refract. n</label>
+        <input type="range" id="slN" min="1.0" max="3.5" value="${engine.S.refractN}" step="0.05">
+        <div class="val" id="vN">${engine.S.refractN.toFixed(2)}</div></div>
+      <div style="font-size:9px;color:var(--dim);margin-top:3px;font-family:var(--mono)">1.0=vacuum 1.5=glass 2.4=diamond</div>`;
+    document.getElementById('slN').addEventListener('input',function(){engine.S.refractN=+this.value;document.getElementById('vN').textContent=(+this.value).toFixed(2)});
+  } else if(mode.settings.gravity){
+    box.style.display='block';lbl.textContent='🌑 Gravity Controls';
+    inner.innerHTML=`
+      <div class="row2"><label>G strength</label>
+        <input type="range" id="slGrav" min="1000" max="80000" value="${engine.S.gravStr}" step="500">
+        <div class="val" id="vGrav">${Math.round(engine.S.gravStr/1000)}k</div></div>
+      <div style="font-size:9px;color:var(--dim);margin-top:3px;font-family:var(--mono)">High = tighter path curvature</div>`;
+    document.getElementById('slGrav').addEventListener('input',function(){engine.S.gravStr=+this.value;document.getElementById('vGrav').textContent=Math.round(+this.value/1000)+'k'});
+  } else if(mode.id==='v6'){
+    box.style.display='block';lbl.textContent='◎ Doppler Observer';
+    inner.innerHTML=`
+      <div class="row2"><label>Observer X</label>
+        <input type="range" id="slDopX" min="0.05" max="0.95" step="0.01" value="${engine.S.dopplerObsX}">
+        <div class="val" id="vDopX">${Math.round(engine.S.dopplerObsX*100)}%</div></div>
+      <div class="row2"><label>Observer Y</label>
+        <input type="range" id="slDopY" min="0.05" max="0.95" step="0.01" value="${engine.S.dopplerObsY}">
+        <div class="val" id="vDopY">${Math.round(engine.S.dopplerObsY*100)}%</div></div>
+      <div style="font-size:9px;color:var(--c6);margin-top:3px;font-family:var(--mono)">Drag OBS marker on canvas too</div>`;
+    document.getElementById('slDopX').addEventListener('input',function(){engine.S.dopplerObsX=+this.value;document.getElementById('vDopX').textContent=Math.round(+this.value*100)+'%'});
+    document.getElementById('slDopY').addEventListener('input',function(){engine.S.dopplerObsY=+this.value;document.getElementById('vDopY').textContent=Math.round(+this.value*100)+'%'});
+  } else if(mode.id==='v7'){
+    box.style.display='block';lbl.textContent='⏱ Twin Controls';
+    inner.innerHTML=`
+      <div class="row2"><label>Twin speed β</label>
+        <input type="range" id="slTwinSpd" min="0.1" max="0.995" step="0.005" value="${engine.S.twinSpeed}">
+        <div class="val" id="vTwinSpd">${engine.S.twinSpeed.toFixed(2)}c</div></div>
+      <div class="row2"><label>Trip duration</label>
+        <input type="range" id="slTwinDur" min="1" max="8" step="0.5" value="${engine.S.twinTripDur}">
+        <div class="val" id="vTwinDur">${engine.S.twinTripDur.toFixed(1)}s</div></div>
+      <div style="font-size:9px;color:var(--c6);margin-top:3px;font-family:var(--mono)" id="twinPreviewBar">
+        γ=${gB2(engine.S.twinSpeed**2).toFixed(3)} · est. Δage=${((engine.S.twinTripDur*2)*(1-1/gB2(engine.S.twinSpeed**2))).toFixed(2)}s
+      </div>
+      <button class="btn warn" style="width:100%;margin-top:5px" onclick="engine.clearField();twinState.phase='out';twinState.lapTime=0;twinState.labClock=0;twinState.travelClock=0;twinState.announced=false;twinState.tripDur=engine.S.twinTripDur;twinState.speed=engine.S.twinSpeed">↺ Restart twins</button>`;
+    const updPrev=()=>{
+      const b=engine.S.twinSpeed,g=gB2(b*b),d=engine.S.twinTripDur;
+      const el=document.getElementById('twinPreviewBar');
+      if(el)el.textContent=`γ=${g.toFixed(3)} · est. Δage=${(d*2*(1-1/g)).toFixed(2)}s`;
+    };
+    document.getElementById('slTwinSpd').addEventListener('input',function(){
+      engine.S.twinSpeed=+this.value;document.getElementById('vTwinSpd').textContent=(+this.value).toFixed(2)+'c';updPrev();
+    });
+    document.getElementById('slTwinDur').addEventListener('input',function(){
+      engine.S.twinTripDur=+this.value;document.getElementById('vTwinDur').textContent=(+this.value).toFixed(1)+'s';updPrev();
+    });
+  } else if(mode.settings.massEmergence){
+    box.style.display='block';lbl.textContent='⚛ Emergence Controls';
+    inner.innerHTML=`
+      <div class="row2"><label>Massive fraction</label>
+        <input type="range" id="slMFrac" min="0.05" max="0.95" value="0.38" step="0.01">
+        <div class="val" id="vMFrac">38%</div></div>`;
+    document.getElementById('slMFrac').addEventListener('input',function(){engine._massiveFrac=+this.value;document.getElementById('vMFrac').textContent=Math.round(+this.value*100)+'%'});
+  } else if(mode.id==='v0'){
+    box.style.display='block';lbl.textContent='📊 Classical Baseline';
+    inner.innerHTML=`<div style="font-size:10px;color:var(--dim);line-height:1.6;font-family:var(--sans)">No γ correction. Particles can exceed c. Switch to v1 to see the relativistic constraint activate.</div>`;
+  } else {box.style.display='none'}
+}
+
+// ── Mass explorer bindings ────────────────────────────────────────────
+function bindExplorer(){
+  const slM=document.getElementById('slMass'),slB=document.getElementById('slBeta');
+  function upd(){
+    const m=+slM.value,beta=+slB.value,beta2=beta*beta,g=gB2(beta2);
+    engine.S.explorerMass=m;engine.S.explorerBeta=beta;
+    document.getElementById('vMass').textContent=m===0?'0 (γ)':m.toFixed(2)+' mu';
+    document.getElementById('vBeta').textContent=m===0?'1.00 c':beta.toFixed(4)+' c';
+    document.getElementById('gGamma').textContent=m===0?'∞':g.toFixed(3);
+    document.getElementById('gSpeed').textContent=m===0?'c (max)':beta.toFixed(4)+' c';
+    if(m===0){document.getElementById('gEnergy').textContent='E=pc';document.getElementById('gTau').textContent='frozen';slB.disabled=true}
+    else{document.getElementById('gEnergy').textContent=g.toFixed(3)+' mc²';document.getElementById('gTau').textContent=(1/g).toFixed(4);slB.disabled=false}
+  }
+  slM.addEventListener('input',upd);slB.addEventListener('input',upd);upd();
+}
+
+// ── Mode strip ────────────────────────────────────────────────────────
+function buildModeStrip(){
+  const el=document.getElementById('modes');el.innerHTML='';
+  for(const m of MODES){
+    const b=document.createElement('button');
+    b.className='mbtn'+(m.isNew?' new-mode':'');b.dataset.id=m.id;
+    b.innerHTML=`<div class="mid">${m.id}${m.isNew?' <span class="new-badge">NEW</span>':''}</div><div class="mname">${m.name}</div><div class="mtag">${m.tag}</div>`;
+    b.addEventListener('click',()=>{setActiveMode(m.id);engine.setMode(m)});
+    el.appendChild(b);
+  }
+  setActiveMode(MODES[1].id);
+}
+function setActiveMode(id){document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.id===id))}
+
+// ── Interaction ───────────────────────────────────────────────────────
+function bindInteraction(){
+  const cnv=document.getElementById('c');
+  let dragging=false,lastClick=0,suppressClick=false;
+  let draggingObs=false;
+
+  function bind(id,cb){const el=document.getElementById(id);if(el){el.addEventListener('input',cb);el.addEventListener('change',cb)}}
+  bind('slSpawn',function(){engine.S.spawnRate=+this.value;document.getElementById('vSpawn').textContent=this.value+'/s'});
+  bind('slTrail',function(){engine.S.trailLen=+this.value;document.getElementById('vTrail').textContent=this.value+' pts'});
+  bind('slTime', function(){engine.S.timeScale=+this.value;document.getElementById('vTime').textContent=(+this.value).toFixed(2)+'×'});
+  bind('slC',    function(){engine.S.c=+this.value;document.getElementById('vC').textContent=this.value});
+  bind('slAngle',function(){engine.S.beamAngle=+this.value;document.getElementById('vAngle').textContent=this.value+'°'});
+  bind('slSpread',function(){engine.S.beamSpread=+this.value;document.getElementById('vSpread').textContent=this.value+'°'});
+  bind('cbCone', function(){engine.S.showCone=this.checked;document.getElementById('vCone').textContent=this.checked?'ON':'OFF'});
+  bind('cbCards',function(){engine.S.autoCards=this.checked;document.getElementById('vCards').textContent=this.checked?'ON':'OFF'});
+  bind('selEmit',function(){engine.S.emitMode=this.value});
+
+  document.getElementById('btnPulse').addEventListener('click',()=>engine.pulse(64));
+  document.getElementById('btnClear').addEventListener('click',()=>engine.clearField());
+  document.getElementById('btnPause').addEventListener('click',()=>{
+    engine.paused=!engine.paused;
+    document.getElementById('btnPause').textContent=engine.paused?'▶ Resume':'⏸ Pause';
+  });
+  document.getElementById('btnCenter').addEventListener('click',()=>{engine.ex=engine.W*.5;engine.ey=engine.H*.5;engine._toast('Recentered')});
+
+  cnv.addEventListener('pointermove',e=>{
+    const r=cnv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+    engine.mouseX=x;engine.mouseY=y;
+    if(draggingObs){
+      engine.S.dopplerObsX=clamp(x/engine.W,.02,.98);
+      engine.S.dopplerObsY=clamp(y/engine.H,.02,.98);
+      const slX=document.getElementById('slDopX'),slY=document.getElementById('slDopY');
+      if(slX)slX.value=engine.S.dopplerObsX;if(slY)slY.value=engine.S.dopplerObsY;
+      const vX=document.getElementById('vDopX'),vY=document.getElementById('vDopY');
+      if(vX)vX.textContent=Math.round(engine.S.dopplerObsX*100)+'%';
+      if(vY)vY.textContent=Math.round(engine.S.dopplerObsY*100)+'%';
+      return;
+    }
+    if(!dragging)return;
+    engine.ex=x;engine.ey=y;
+    const ang=Math.round((Math.atan2(y-engine.H*.5,x-engine.W*.5)*180/Math.PI+360)%360);
+    document.getElementById('slAngle').value=ang;
+    document.getElementById('vAngle').textContent=ang+'°';engine.S.beamAngle=ang;
+  });
+
+  cnv.addEventListener('pointerdown',e=>{
+    const now=performance.now(),r=cnv.getBoundingClientRect();
+    const x=e.clientX-r.left,y=e.clientY-r.top;
+    // check if clicking near obs marker
+    if(engine.mode.settings.doppler){
+      const ox=engine.S.dopplerObsX*engine.W,oy=engine.S.dopplerObsY*engine.H;
+      if(Math.hypot(x-ox,y-oy)<22){draggingObs=true;cnv.setPointerCapture(e.pointerId);return}
+    }
+    if(now-lastClick<280){engine.addDisturbance(x,y,1800);suppressClick=true;lastClick=0;return}
+    lastClick=now;dragging=true;engine.ex=x;engine.ey=y;cnv.setPointerCapture(e.pointerId);
+  });
+  cnv.addEventListener('pointerup',e=>{dragging=false;draggingObs=false;try{cnv.releasePointerCapture(e.pointerId)}catch{}});
+  cnv.addEventListener('click',e=>{
+    if(suppressClick){suppressClick=false;return}
+    const r=cnv.getBoundingClientRect();engine.ex=e.clientX-r.left;engine.ey=e.clientY-r.top;
+    engine._shockwave(engine.ex,engine.ey,'56,200,255',160);
+  });
+
+  window.addEventListener('keydown',e=>{
+    if(e.key===' '){e.preventDefault();engine.paused=!engine.paused;document.getElementById('btnPause').textContent=engine.paused?'▶ Resume':'⏸ Pause'}
+    else if(e.key.toLowerCase()==='c')engine.clearField();
+    else if(e.key.toLowerCase()==='p')engine.pulse(72);
+    else if(e.key>='0'&&e.key<='7'){const m=MODES[+e.key];if(m){setActiveMode(m.id);engine.setMode(m)}}
+  });
+}
+
+// ── Velocity vectors ──────────────────────────────────────────────────
+let showVec=false;
+window.addEventListener('keydown',e=>{if(e.key==='v'||e.key==='V')showVec=!showVec});
+
+// ── Bootstrap ─────────────────────────────────────────────────────────
+const cvs=document.getElementById('c');
+const cx=cvs.getContext('2d');
+const engine=new Engine();
+const renderer=new Renderer(engine,cx);
+
+function resize(){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  cvs.width=Math.floor(innerWidth*dpr);cvs.height=Math.floor(innerHeight*dpr);
+  cvs.style.width=innerWidth+'px';cvs.style.height=innerHeight+'px';
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  engine.resize(innerWidth,innerHeight);
+}
+window.addEventListener('resize',resize);resize();
+
+buildModeStrip();
+bindInteraction();
+bindExplorer();
+engine.setMode(MODES[1]);setActiveMode(MODES[1].id);
+
+// velocity vector pass
+const origRender=renderer.render.bind(renderer);
+renderer.render=function(){
+  origRender();
+  if(!showVec)return;
+  cx.save();cx.lineWidth=1;
+  for(let i=0;i<this.eng.apc;i++){
+    const p=this.eng.ps[i];
+    cx.strokeStyle=p.massless?'rgba(56,217,255,.2)':`rgba(255,210,50,${clamp(.1+(p.gamma-1)*.03,.1,.3)})`;
+    cx.beginPath();cx.moveTo(p.px,p.py);cx.lineTo(p.px+p.vx*.022,p.py+p.vy*.022);cx.stroke();
+  }
+  cx.restore();
+};
+
+let last=performance.now();
+(function frame(now){
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  engine.update(dt);renderer.render();requestAnimationFrame(frame);
+})(last);
+
+// UX hints
+const hints={};let hActive=false;
+function hint(key,txt,delay){
+  setTimeout(()=>{if(hints[key]||hActive)return;hints[key]=true;hActive=true;
+    engine._toast(txt);setTimeout(()=>hActive=false,2400);},delay);
+}
+hint('start','Click canvas to move emitter · drag to steer',800);
+hint('modes','Keys 0-7 switch modes · M opens mode picker',3500);
+hint('new','★ NEW: v6 Doppler Shift · v7 Twin Paradox',7000);
+</script>
+</body>
+</html>
