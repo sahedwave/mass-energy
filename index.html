@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>Relativistic Universe </title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
 <style>
@@ -30,7 +30,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;font-family:var(--sans)}
-body{background:var(--bg);color:var(--text);font-size:13px}
+body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--text);font-size:13px}
 
 canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;cursor:crosshair}
 
@@ -98,6 +98,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;cursor:crosshair}
   width:var(--panel-w);z-index:25;
   display:flex;flex-direction:column;gap:6px;
   overflow-y:auto;scrollbar-width:none;padding-bottom:4px;
+  transition:transform 0.28s ease,opacity 0.28s ease;
 }
 #lpanel::-webkit-scrollbar{display:none}
 .panel-block{padding:10px;border-radius:14px}
@@ -407,11 +408,49 @@ select:focus{border-color:rgba(56,217,255,.3)}
   padding:1px 5px;font-family:var(--mono);vertical-align:middle;margin-left:3px;
 }
 
+#mobile-panel-toggle{
+  display:none;
+  position:fixed;
+  top:max(10px, calc(env(safe-area-inset-top) + 6px));
+  left:10px;
+  z-index:40;
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,16,32,.92);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.08em;
+}
+
 @media(max-width:860px){#legend{display:none}#dopplerkey{display:none!important}}
 @media(max-width:640px){
-  #lpanel{width:180px}
-  #cards{left:10px;right:10px;width:auto;bottom:80px}
-  #helpbar{display:none}
+  #mobile-panel-toggle{display:block}
+  #topbar{
+    top:max(8px, calc(env(safe-area-inset-top) + 4px));left:8px;right:8px;height:auto;
+    flex-wrap:wrap;align-items:stretch;
+  }
+  #mobile-panel-toggle{
+    top:auto;
+    bottom:max(14px, calc(env(safe-area-inset-bottom) + 8px));
+    left:10px;
+    width:42px;
+    height:42px;
+    padding:0;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    font-size:14px;
+  }
+  #brand{flex:1 1 calc(100% - 52px);min-width:0;padding-right:6px}
+  #modes{order:3;width:100%;height:auto}
+  #lpanel{width:min(180px, calc(100vw - 72px))}
+  #lpanel.mobile-collapsed{transform:translateX(-110%);opacity:0}
+  #rightcol{display:none}
+  #cards{left:auto;right:10px;width:min(calc(100vw - 20px), 240px);bottom:max(68px, calc(env(safe-area-inset-bottom) + 56px))}
+  #helpbar,
+  #helpbar0{display:none}
 }
 </style>
 </head>
@@ -419,6 +458,7 @@ select:focus{border-color:rgba(56,217,255,.3)}
 <canvas id="c"></canvas>
 <div id="tovl"></div>
 <div id="toast"></div>
+<button id="mobile-panel-toggle" type="button">☰ Panel</button>
 
 <!-- ── TOP BAR ── -->
 <div id="topbar">
@@ -788,6 +828,7 @@ class Engine{
   constructor(){
     this.W=innerWidth;this.H=innerHeight;
     this.ex=this.W*.5;this.ey=this.H*.5;
+    this.gravityStartOffset=70;
     this.ps=[];this.apc=0;
     this.sws=[];this.dists=[];
     this.paused=false;this.frame=0;this.rt=0;
@@ -808,16 +849,29 @@ class Engine{
     };
 
     this.medZ={x:this.W*.5,y:this.H*.52,r:Math.min(this.W,this.H)*.18};
-    this.gravW={x:this.W*.58,y:this.H*.48,r:Math.min(this.W,this.H)*.08};
+    this.gravW={x:this.W*.5,y:this.H*.5,r:Math.min(this.W,this.H)*.08};
 
     for(let i=0;i<MAX_P;i++)this.ps.push(new P());
+  }
+
+  _layoutGravityScene(resetEmitter=false){
+    this.gravW.x=this.W*.5;
+    this.gravW.y=this.H*.5;
+    this.gravW.r=Math.min(this.W,this.H)*.08;
+    if(resetEmitter){
+      this.ex=this.gravW.x-this.gravityStartOffset;
+      this.ey=this.gravW.y;
+    }
   }
 
   resize(w,h){
     this.W=w;this.H=h;
     this.medZ.x=w*.5;this.medZ.y=h*.52;this.medZ.r=Math.min(w,h)*.18;
-    this.gravW.x=w*.58;this.gravW.y=h*.48;this.gravW.r=Math.min(w,h)*.08;
-    if(this.ex>w||this.ey>h){this.ex=w*.5;this.ey=h*.5}
+    this._layoutGravityScene(false);
+    if(this.ex>w||this.ey>h){
+      if(this.mode.settings.gravity)this._layoutGravityScene(true);
+      else{this.ex=w*.5;this.ey=h*.5}
+    }
   }
 
   setMode(m){
@@ -827,6 +881,7 @@ class Engine{
     document.getElementById('vCone').textContent=this.S.showCone?'ON':'OFF';
     this._transBegin();
     if(this.S.autoCards)CardMgr.show(m);
+    if(m.settings.gravity)this._layoutGravityScene(true);
     this._shockwave(this.ex,this.ey,'56,217,255',260);
     this._toast(`${m.id.toUpperCase()} · ${m.name}`);
     updateModeControls(m);
@@ -1687,7 +1742,11 @@ function bindInteraction(){
     engine.paused=!engine.paused;
     document.getElementById('btnPause').textContent=engine.paused?'▶ Resume':'⏸ Pause';
   });
-  document.getElementById('btnCenter').addEventListener('click',()=>{engine.ex=engine.W*.5;engine.ey=engine.H*.5;engine._toast('Recentered')});
+  document.getElementById('btnCenter').addEventListener('click',()=>{
+    if(engine.mode.settings.gravity)engine._layoutGravityScene(true);
+    else{engine.ex=engine.W*.5;engine.ey=engine.H*.5}
+    engine._toast('Recentered');
+  });
 
   cnv.addEventListener('pointermove',e=>{
     const r=cnv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
@@ -1744,6 +1803,18 @@ const cvs=document.getElementById('c');
 const cx=cvs.getContext('2d');
 const engine=new Engine();
 const renderer=new Renderer(engine,cx);
+const mobilePanelToggle=document.getElementById('mobile-panel-toggle');
+
+function syncMobilePanelToggle(){
+  const mobile=window.matchMedia('(max-width:640px)').matches;
+  const collapsed=document.getElementById('lpanel').classList.contains('mobile-collapsed');
+  mobilePanelToggle.textContent=!mobile?'☰ Panel':(collapsed?'☰':'✕');
+}
+
+mobilePanelToggle.addEventListener('click',()=>{
+  document.getElementById('lpanel').classList.toggle('mobile-collapsed');
+  syncMobilePanelToggle();
+});
 
 function resize(){
   const dpr=Math.min(devicePixelRatio||1,2);
@@ -1753,6 +1824,14 @@ function resize(){
   engine.resize(innerWidth,innerHeight);
 }
 window.addEventListener('resize',resize);resize();
+window.addEventListener('resize',()=>{
+  const panel=document.getElementById('lpanel');
+  if(window.matchMedia('(max-width:640px)').matches) panel.classList.add('mobile-collapsed');
+  else panel.classList.remove('mobile-collapsed');
+  syncMobilePanelToggle();
+});
+if(window.matchMedia('(max-width:640px)').matches) document.getElementById('lpanel').classList.add('mobile-collapsed');
+syncMobilePanelToggle();
 
 buildModeStrip();
 bindInteraction();
